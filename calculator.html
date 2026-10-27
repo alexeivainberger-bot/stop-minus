@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Калькулятор юнит-экономики Wildberries — маржа, ROI и цена «в ноль»</title>
+  <meta name="description" content="Бесплатный калькулятор юнит-экономики для селлеров Wildberries: чистая прибыль, маржа, ROI, цена «в ноль» и максимальная скидка для акции. Без регистрации, считается в браузере.">
+  <link rel="stylesheet" href="site.css">
+  <link rel="icon" href="icons/icon-48.png">
+  <style>
+    .calc { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; align-items: start; margin-top: 28px; }
+    @media (max-width: 900px) { .calc { grid-template-columns: 1fr; } }
+
+    .card-box { border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 20px; }
+    .card-box h2 { margin: 0 0 14px; font-size: 18px; }
+
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .fields { grid-template-columns: 1fr; } }
+    .fields label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+    .fields input { font: 15px inherit; padding: 9px 10px; border: 1px solid #d8cfc0; border-radius: 10px; background: #fff; color: var(--ink); width: 100%; }
+    .fields input:focus { outline: 2px solid rgba(123, 31, 162, 0.25); border-color: var(--accent); }
+    .fields .wide { grid-column: 1 / -1; }
+
+    .result { border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 20px; position: sticky; top: 16px; }
+    .result[data-status="loss"] { border-color: #f3b5b5; background: #fff6f6; }
+    .result[data-status="below"] { border-color: #f0d090; background: #fffdf5; }
+    .profit { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+    .profit span { font-size: 12px; color: var(--muted); }
+    .profit b { font-size: 30px; letter-spacing: -0.02em; }
+    .result[data-status="ok"] .profit b { color: var(--ok); }
+    .result[data-status="below"] .profit b { color: #a87400; }
+    .result[data-status="loss"] .profit b { color: var(--bad); }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+    .metrics div { background: #f7f3ea; border-radius: 10px; padding: 8px 10px; display: flex; justify-content: space-between; }
+    .metrics span { font-size: 11px; color: var(--muted); }
+    .metrics b { font-size: 15px; }
+    .warn { margin-top: 10px; padding: 9px 11px; border-radius: 10px; font-weight: 700; font-size: 13px; background: #ffeaea; color: #b02525; }
+    .warn[data-status="below"] { background: #fff7e3; color: #8a5a00; }
+    .warn[hidden] { display: none; }
+    .hintline { margin-top: 10px; font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+    .promo { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 12px; }
+    .promo-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+    .promo-head b { color: var(--ink); font-size: 14px; }
+    .promo input[type=range] { width: 100%; margin: 8px 0 6px; accent-color: var(--accent); }
+    .promo-line { font-size: 12px; line-height: 1.45; color: #5d564a; }
+    .promo-line.stop { color: var(--bad); font-weight: 800; }
+    .promo-line.warnline { color: #8a5a00; font-weight: 700; }
+
+    .actions-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .btn.small { padding: 9px 14px; font-size: 13px; border: 0; cursor: pointer; }
+    .btn.ghost.small { background: var(--accent-soft); color: #55126f; }
+    .note { min-height: 16px; margin: 8px 0 0; font-size: 12px; color: var(--ok); }
+
+    .how { margin-top: 40px; }
+    .how code { background: #f4f0e7; padding: 1px 5px; border-radius: 5px; font-size: 13px; }
+    .faq dt { font-weight: 700; margin-top: 14px; }
+    .faq dd { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="index.html">
+    <img src="icons/icon-48.png" alt="" width="28" height="28">
+    Стоп-минус
+  </a>
+  <nav>
+    <a href="index.html">Главная</a>
+    <a href="demo/demo.html">Демо расширения</a>
+    <a href="privacy.html">Политика</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" style="padding-bottom: 0;">
+    <h1 style="font-size: clamp(28px, 4vw, 42px);">Калькулятор юнит-экономики Wildberries</h1>
+    <p class="lead">
+      Введите свою цену и закупку — увидите <b>чистую прибыль, маржу и ROI</b> с учётом комиссии,
+      логистики, упаковки, налога и процента выкупа. Плюс цена «в ноль» и максимальная скидка для акции.
+      Считается в браузере, данные никуда не отправляются.
+    </p>
+  </section>
+
+  <section class="calc">
+    <div class="card-box">
+      <h2>Ваши цифры</h2>
+      <div class="fields">
+        <label>Цена продажи, ₽<input id="f-price" type="text" inputmode="decimal" value="1990"></label>
+        <label>Себестоимость, ₽<input id="f-cost" type="text" inputmode="decimal" value="620"></label>
+        <label>Упаковка, ₽<input id="f-packaging" type="text" inputmode="decimal" value="30"></label>
+        <label>Логистика, ₽<input id="f-logistics" type="text" inputmode="decimal" value="180"></label>
+        <label>Комиссия, %<input id="f-commission" type="text" inputmode="decimal" value="15"></label>
+        <label>Налог, %<input id="f-tax" type="text" inputmode="decimal" value="6"></label>
+        <label>Процент выкупа, %<input id="f-buyout" type="text" inputmode="decimal" value="90"></label>
+        <label>Расход на возврат, ₽<input id="f-return" type="text" inputmode="decimal" value="50"></label>
+        <label>Прочие расходы, ₽<input id="f-other" type="text" inputmode="decimal" value="20"></label>
+        <label>Порог маржи, %<input id="f-threshold" type="text" inputmode="decimal" value="15"></label>
+      </div>
+
+      <div class="actions-row">
+        <button type="button" class="btn small" id="copy">Скопировать расчёт</button>
+        <button type="button" class="btn ghost small" id="share">Скопировать ссылку</button>
+        <button type="button" class="btn ghost small" id="reset">Сбросить</button>
+      </div>
+      <p class="note" id="note" aria-live="polite"></p>
+    </div>
+
+    <aside class="result" id="result" data-status="ok">
+      <div class="profit"><span>Чистая прибыль</span><b id="r-profit">—</b></div>
+      <div class="metrics">
+        <div><span>Маржа</span><b id="r-margin">—</b></div>
+        <div><span>ROI</span><b id="r-roi">—</b></div>
+      </div>
+      <div class="warn" id="r-warn" hidden></div>
+      <div class="hintline" id="r-hint"></div>
+
+      <div class="promo">
+        <div class="promo-head"><span>Акция: скидка</span><b id="r-promo-pct">0%</b></div>
+        <input type="range" id="f-promo" min="0" max="70" step="1" value="0">
+        <div class="promo-line" id="r-promo-line"></div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="how">
+    <h2>Как считается</h2>
+    <p>
+      <code>Прибыль = цена − себестоимость − упаковка − логистика − комиссия − налог − расходы на возвраты − прочие</code>
+    </p>
+    <p>
+      Комиссия и налог считаются от цены, а расходы на возвраты — как <code>расход на возврат × (1 − выкуп)</code>.
+      Маржа — прибыль в процентах от цены, ROI — прибыль в процентах от вложенного
+      (себестоимость + упаковка + логистика + прочие).
+    </p>
+    <p>
+      Цена «в ноль» и цена для нужной маржи считаются аналитически, а не подбором. Максимальная скидка —
+      та, при которой маржа ещё не уходит в минус: скидка уменьшает и цену, и комиссию с налогом,
+      поэтому маржа падает быстрее, чем кажется.
+    </p>
+    <dl class="faq">
+      <dt>Почему в калькуляторе нет хранения и эквайринга?</dt>
+      <dd>Их можно добавить в «Прочие расходы» — так расчёт остаётся универсальным для разных схем и категорий.</dd>
+      <dt>Данные сохраняются?</dt>
+      <dd>Только в вашем браузере, локально. Ни сервера, ни аккаунта, ни передачи данных.</dd>
+      <dt>А есть версия прямо в кабинете?</dt>
+      <dd>Да — расширение «Стоп-минус» показывает те же цифры у поля цены: <a href="index.html">подробнее</a>.</dd>
+    </dl>
+  </section>
+</main>
+
+<footer class="bottom">
+  <span>Стоп-минус · калькулятор</span>
+  <span><a href="privacy.html">Политика конфиденциальности</a></span>
+</footer>
+
+<script src="src/calc.js"></script>
+<script>
+(function () {
+  'use strict';
+  var C = window.WbMarginCalc;
+  var KEY = 'stop-minus-calc.v1';
+
+  var FIELDS = {
+    'f-price': 'price',
+    'f-cost': 'cost',
+    'f-packaging': 'packaging',
+    'f-logistics': 'logistics',
+    'f-commission': 'commissionPct',
+    'f-tax': 'taxPct',
+    'f-buyout': 'buyoutPct',
+    'f-return': 'returnCost',
+    'f-other': 'otherCosts',
+    'f-threshold': 'thresholdPct'
+  };
+
+  var DEFAULTS = {
+    price: 1990, cost: 620, packaging: 30, logistics: 180,
+    commissionPct: 15, taxPct: 6, buyoutPct: 90, returnCost: 50,
+    otherCosts: 20, thresholdPct: 15, promoDiscountPct: 0
+  };
+
+  var state = Object.assign({}, DEFAULTS);
+  var $ = function (id) { return document.getElementById(id); };
+
+  function readInputs() {
+    Object.keys(FIELDS).forEach(function (id) {
+      var el = $(id);
+      if (el) state[FIELDS[id]] = C.toNum(el.value);
+    });
+    var promo = $('f-promo');
+    if (promo) state.promoDiscountPct = C.toNum(promo.value);
+    return state;
+  }
+
+  function writeInputs() {
+    Object.keys(FIELDS).forEach(function (id) {
+      var el = $(id);
+      if (el) el.value = String(state[FIELDS[id]]);
+    });
+    var promo = $('f-promo');
+    if (promo) promo.value = String(state.promoDiscountPct || 0);
+  }
+
+  function render() {
+    var input = readInputs();
+    var r = C.compute(input);
+    var box = $('result');
+    box.dataset.status = r.status;
+
+    $('r-profit').textContent = C.formatRub(r.profit);
+    $('r-margin').textContent = C.formatPct(r.marginPct);
+    $('r-roi').textContent = C.formatPct(r.roiPct);
+
+    var warn = C.warningText(r);
+    var warnEl = $('r-warn');
+    if (warn) {
+      warnEl.hidden = false;
+      warnEl.textContent = warn;
+      warnEl.dataset.status = r.status === 'below' ? 'below' : 'loss';
+    } else {
+      warnEl.hidden = true;
+      warnEl.textContent = '';
+    }
+
+    var minZero = C.priceForMargin(0, input);
+    var minTarget = C.priceForMargin(C.toNum(input.thresholdPct), input);
+    var hint = [];
+    if (minZero !== null) hint.push('в ноль — от ' + C.formatRub(minZero));
+    if (minTarget !== null && C.toNum(input.thresholdPct) > 0) {
+      hint.push('маржа ' + Math.round(C.toNum(input.thresholdPct)) + '% — от ' + C.formatRub(minTarget));
+    }
+    $('r-hint').textContent = hint.join(' · ');
+
+    var promo = C.promoResult(input, C.toNum(input.promoDiscountPct));
+    var maxZero = C.maxDiscountPct(input, 0);
+    var maxTarget = C.maxDiscountPct(input, C.toNum(input.thresholdPct));
+    var line = $('r-promo-line');
+    line.className = 'promo-line';
+    $('r-promo-pct').textContent = Math.round(C.toNum(input.promoDiscountPct)) + '%';
+
+    var d = C.toNum(input.promoDiscountPct);
+    if (d <= 0) {
+      if (maxZero !== null && maxZero <= 0) {
+        line.className = 'promo-line warnline';
+        line.textContent = 'Скидка невозможна: при этой цене уже минус.';
+      } else {
+        line.textContent = 'Максимальная скидка без минуса: ' + (maxZero === null ? '—' : Math.floor(maxZero) + '%') +
+          (maxTarget !== null && C.toNum(input.thresholdPct) > 0 ? ' · до маржи ' + Math.round(C.toNum(input.thresholdPct)) + '%: ' + Math.floor(maxTarget) + '%' : '');
+      }
+    } else if (promo.status === 'loss') {
+      line.className = 'promo-line stop';
+      line.textContent = 'СТОП: со скидкой ' + Math.round(d) + '% цена ' + C.formatRub(promo.discountedPrice) +
+        ' даёт ' + C.formatRub(promo.profit) + '. В такую акцию идти нельзя.';
+    } else if (promo.status === 'below') {
+      line.className = 'promo-line warnline';
+      line.textContent = 'Цена ' + C.formatRub(promo.discountedPrice) + ' → ' + C.formatRub(promo.profit) +
+        ' · маржа ' + C.formatPct(promo.marginPct) + ' — ниже порога';
+    } else {
+      line.textContent = 'Цена ' + C.formatRub(promo.discountedPrice) + ' → ' + C.formatRub(promo.profit) +
+        ' · маржа ' + C.formatPct(promo.marginPct) + ' · ROI ' + C.formatPct(promo.roiPct);
+    }
+
+    save(input);
+    return r;
+  }
+
+  function save(input) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(input));
+    } catch (e) { /* приватный режим — просто не сохраняем */ }
+  }
+
+  function load() {
+    var fromUrl = readQuery();
+    if (fromUrl) { state = Object.assign({}, DEFAULTS, fromUrl); return; }
+    try {
+      var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (saved) state = Object.assign({}, DEFAULTS, saved);
+    } catch (e) { /* ignore */ }
+  }
+
+  var QUERY_MAP = {
+    price: 'price', cost: 'cost', packaging: 'packaging', logistics: 'logistics',
+    commission: 'commissionPct', tax: 'taxPct', buyout: 'buyoutPct', ret: 'returnCost',
+    other: 'otherCosts', threshold: 'thresholdPct', promo: 'promoDiscountPct'
+  };
+
+  function readQuery() {
+    var params = new URLSearchParams(location.search);
+    var out = {};
+    var any = false;
+    Object.keys(QUERY_MAP).forEach(function (key) {
+      if (params.has(key)) {
+        out[QUERY_MAP[key]] = C.toNum(params.get(key));
+        any = true;
+      }
+    });
+    return any ? out : null;
+  }
+
+  function shareUrl() {
+    var input = readInputs();
+    var params = new URLSearchParams();
+    Object.keys(QUERY_MAP).forEach(function (key) {
+      params.set(key, String(input[QUERY_MAP[key]]));
+    });
+    return location.origin + location.pathname + '?' + params.toString();
+  }
+
+  function summary() {
+    var r = C.compute(readInputs());
+    return [
+      'Цена: ' + C.formatRub(r.price),
+      'Прибыль: ' + C.formatRub(r.profit),
+      'Маржа: ' + C.formatPct(r.marginPct),
+      'ROI: ' + C.formatPct(r.roiPct)
+    ].join(' · ');
+  }
+
+  function copy(text, message) {
+    var note = $('note');
+    function done() { note.textContent = message; setTimeout(function () { note.textContent = ''; }, 2500); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { window.prompt('Скопируйте:', text); });
+    } else {
+      window.prompt('Скопируйте:', text);
+    }
+  }
+
+  function bind() {
+    Object.keys(FIELDS).forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', render);
+      el.addEventListener('change', render);
+    });
+    $('f-promo').addEventListener('input', render);
+    $('copy').addEventListener('click', function () { copy(summary(), 'Расчёт скопирован'); });
+    $('share').addEventListener('click', function () { copy(shareUrl(), 'Ссылка с вашими цифрами скопирована'); });
+    $('reset').addEventListener('click', function () {
+      state = Object.assign({}, DEFAULTS);
+      writeInputs();
+      render();
+      $('note').textContent = 'Сброшено к примеру';
+      setTimeout(function () { $('note').textContent = ''; }, 2000);
+    });
+  }
+
+  load();
+  writeInputs();
+  bind();
+  render();
+})();
+</script>
+</body>
+</html>

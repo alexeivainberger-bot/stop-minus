@@ -43,6 +43,27 @@
     return costs;
   }
 
+  function addDemoRow() {
+    var tbody = document.querySelector('.price-table tbody');
+    if (!tbody) return;
+    var index = tbody.rows.length + 1;
+    var article = String(900000 + Math.floor(Math.random() * 99999));
+    var tr = document.createElement('tr');
+    tr.dataset.sku = article;
+    tr.dataset.cost = '500';
+    tr.innerHTML =
+      '<td class="mono">' + article + '</td>' +
+      '<td>Новый товар ' + index + '</td>' +
+      '<td class="num">500 ₽</td>' +
+      '<td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="1490"></td>' +
+      '<td class="num muted">0%</td>';
+    tbody.appendChild(tr);
+    Engine.scan();
+    var input = tr.querySelector('input');
+    try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
   function bindSettingsInputs() {
     Object.keys(SETTINGS_MAP).forEach(function (key) {
       var input = $(SETTINGS_MAP[key]);
@@ -61,8 +82,10 @@
     var manual = $('btn-manual');
     var calibrate = $('btn-calibrate');
     var reset = $('btn-reset');
+    var addRow = $('btn-add-row');
 
     if (auto) auto.addEventListener('click', function () { Engine.activateFirst(); });
+    if (addRow) addRow.addEventListener('click', function () { addDemoRow(); });
     if (manual) manual.addEventListener('click', function () {
       Engine.enableManual({ price: 1990, sku: '123456' });
     });

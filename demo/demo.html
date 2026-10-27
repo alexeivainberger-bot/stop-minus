@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Стоп-минус — демо</title>
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    Стоп-минус
+    <span class="tag">демо-страница</span>
+  </div>
+  <div class="note">Имитация таблицы «Цены и скидки». Оверлей считает маржу локально — тот же код, что пойдёт в расширение.</div>
+</header>
+
+<section class="settings">
+  <div class="settings-title">Параметры расчёта</div>
+  <div class="settings-grid">
+    <label>Комиссия, %<input id="s-commission" type="number" step="0.1" min="0" max="100"></label>
+    <label>Налог, %<input id="s-tax" type="number" step="0.1" min="0" max="100"></label>
+    <label>Порог маржи, %<input id="s-threshold" type="number" step="1" min="0" max="100"></label>
+    <label>Логистика, ₽<input id="s-logistics" type="number" step="1" min="0"></label>
+    <label>Упаковка, ₽<input id="s-packaging" type="number" step="1" min="0"></label>
+    <label>Возврат, ₽<input id="s-return" type="number" step="1" min="0"></label>
+    <label>Выкуп, %<input id="s-buyout" type="number" step="1" min="0" max="100"></label>
+    <label>Прочие, ₽<input id="s-other" type="number" step="1" min="0"></label>
+    <label>Скидка акции, %<input id="s-promo" type="number" step="1" min="0" max="90"></label>
+  </div>
+</section>
+
+<main>
+  <div class="page-head">
+    <h1>Цены и скидки</h1>
+    <div class="actions">
+      <button id="btn-auto">Авто-режим</button>
+      <button id="btn-manual" class="secondary">Ручной режим</button>
+      <button id="btn-calibrate" class="secondary">Калибровка</button>
+      <button id="btn-reset" class="ghost">Сбросить к примеру</button>
+    </div>
+  </div>
+
+  <table class="price-table">
+    <thead>
+      <tr>
+        <th>Артикул</th>
+        <th>Наименование</th>
+        <th>Себестоимость</th>
+        <th>Цена, ₽</th>
+        <th>Скидка</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-sku="123456" data-cost="620">
+        <td class="mono">123456</td>
+        <td>Футболка oversize, чёрная</td>
+        <td class="num">620 ₽</td>
+        <td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="1990"></td>
+        <td class="num muted">0%</td>
+      </tr>
+      <tr data-sku="234567" data-cost="1100">
+        <td class="mono">234567</td>
+        <td>Худи с начёсом, серое</td>
+        <td class="num">1 100 ₽</td>
+        <td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="2990"></td>
+        <td class="num muted">0%</td>
+      </tr>
+      <tr data-sku="345678" data-cost="150">
+        <td class="mono">345678</td>
+        <td>Носки, комплект 5 пар</td>
+        <td class="num">150 ₽</td>
+        <td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="390"></td>
+        <td class="num muted">0%</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="hint">
+    Контрольный пример из ТЗ: цена 1 990 ₽, себестоимость 620 ₽, упаковка 30 ₽, логистика 180 ₽,
+    комиссия 15%, налог 6%, выкуп 90%, возврат 50 ₽, прочие 20 ₽
+    → прибыль <b>717 ₽</b>, маржа <b>36%</b>, ROI <b>84%</b>.
+    Поменяй цену в поле — цифры и полоски-чипы пересчитаются на каждом вводе.
+  </p>
+  <p class="hint muted">
+    Продажа в минус: поставь в первой строке цену 1 100 ₽ — панель покраснеет и покажет убыток.
+  </p>
+</main>
+
+<script src="../src/calc.js"></script>
+<script src="../src/store.js"></script>
+<script src="../src/overlay.js"></script>
+<script src="../src/engine.js"></script>
+<script src="demo.js"></script>
+</body>
+</html>

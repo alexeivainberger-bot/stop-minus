@@ -1,0 +1,176 @@
+:root {
+  --bg: #f6f3ec;
+  --card: #fffdf9;
+  --ink: #1d1b16;
+  --muted: #8a8272;
+  --line: #e6ddcf;
+  --accent: #7b1fa2;
+  --accent-soft: #f3e8f8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0 0 40px;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Белый фон — требование каталога Opera к скриншотам */
+body.bg-white { background: #fff; }
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  align-items: baseline;
+  padding: 14px 28px;
+  background: #241a2e;
+  color: #fff;
+}
+
+.brand { font-weight: 800; letter-spacing: -0.01em; font-size: 15px; }
+
+.tag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.top .note { font-size: 12px; color: rgba(255, 255, 255, 0.72); }
+
+.settings {
+  margin: 18px 28px 0;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.settings-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+label {
+  display: grid;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+input {
+  font: 13px inherit;
+  color: var(--ink);
+  padding: 6px 8px;
+  border: 1px solid #d8cfc0;
+  border-radius: 8px;
+  background: #fff;
+  width: 100%;
+}
+
+input:focus {
+  outline: 2px solid rgba(123, 31, 162, 0.28);
+  border-color: var(--accent);
+}
+
+main { padding: 18px 28px 0; }
+
+/* Режим «с правой колонкой»: место под панель, чтобы она не закрывала таблицу.
+   Используется для скриншотов магазина: demo.html?panel=corner */
+body.with-rail .settings,
+body.with-rail main {
+  max-width: calc(100% - 380px);
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+h1 { margin: 0; font-size: 20px; letter-spacing: -0.02em; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+button {
+  font: 600 12.5px inherit;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover { filter: brightness(0.94); }
+
+button.secondary { background: var(--accent-soft); color: #55126f; }
+button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+
+.price-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 13.5px;
+}
+
+.price-table th {
+  text-align: left;
+  padding: 11px 14px;
+  background: #f1ecdf;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b6355;
+}
+
+.price-table td {
+  padding: 10px 14px;
+  border-top: 1px solid #efe9dc;
+  vertical-align: middle;
+}
+
+.price-table tr:hover td { background: #fbf8f1; }
+
+.price-input { max-width: 130px; font-weight: 700; }
+
+.mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12.5px; color: #6b6355; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+
+.hint {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  color: #6b6355;
+  line-height: 1.55;
+  max-width: 900px;
+}
+
+.hint b { color: var(--ink); }

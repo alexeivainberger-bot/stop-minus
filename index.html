@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Стоп-минус — защита от продажи в минус в кабинете Wildberries</title>
+  <meta name="description" content="Показывает чистую прибыль и маржу у поля цены в кабинете продавца Wildberries и предупреждает, когда цена или акция уводят в минус. Только чтение, без сбора данных.">
+  <link rel="stylesheet" href="site.css">
+  <link rel="icon" href="icons/icon-48.png">
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="index.html">
+    <img src="icons/icon-48.png" alt="" width="28" height="28">
+    Стоп-минус
+  </a>
+  <nav>
+    <a href="demo/demo.html">Демо</a>
+    <a href="#features">Возможности</a>
+    <a href="privacy.html">Политика</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <h1>Не продавайте в минус</h1>
+    <p class="lead">
+      Показывает чистую прибыль и маржу прямо у поля цены в кабинете продавца Wildberries —
+      <b>до того, как цена сохранена</b>. Комиссия, логистика, налог, выкуп и ваша себестоимость
+      считаются на вашем компьютере.
+    </p>
+    <div class="cta">
+      <a class="btn" href="demo/demo.html">Открыть демо — без установки</a>
+      <a class="btn ghost" href="dist/wb-margin-guard-1.2.1.zip" download>Скачать для Chrome</a>
+    </div>
+    <p class="fine">Бесплатно · без регистрации · только чтение · без сетевых запросов</p>
+  </section>
+
+  <section class="shots">
+    <img src="docs/store-1.png" alt="Панель показывает прибыль 717 ₽, маржу 36% и ROI 84%">
+    <img src="docs/store-2.png" alt="Красная зона: продажа в минус −65 ₽">
+    <img src="docs/store-3.png" alt="Стоп-сигнал по акции: скидка 50% уводит в минус">
+  </section>
+
+  <section class="how">
+    <h2>Как это работает</h2>
+    <ol>
+      <li><b>Установите</b> расширение и откройте кабинет продавца.</li>
+      <li><b>Введите себестоимости</b> один раз — списком или CSV из Excel.</li>
+      <li><b>Откройте таблицу цен</b> — панель появится рядом с полем цены.</li>
+      <li><b>Меняйте цену</b> — прибыль, маржа и ROI пересчитываются на каждом вводе.</li>
+    </ol>
+  </section>
+
+  <section id="features" class="features">
+    <h2>Что внутри</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Прибыль, маржа, ROI</h3>
+        <p>Три числа, которые селлеры путают. Показаны одновременно, с расшифровкой «из чего сложилось».</p>
+      </div>
+      <div class="card">
+        <h3>Красная зона</h3>
+        <p>Цена ниже себестоимости — панель краснеет и пишет прямым текстом: «Продажа в минус: −65 ₽».</p>
+      </div>
+      <div class="card">
+        <h3>Минимальная цена</h3>
+        <p>«В ноль — от 1 082 ₽», «маржа 15% — от 1 336 ₽». Считается аналитически, без подбора.</p>
+      </div>
+      <div class="card">
+        <h3>Симуляция акции</h3>
+        <p>Ползунок скидки: видно, что 25% ещё в плюсе, а 50% — уже СТОП. Максимальная скидка без минуса — 45%.</p>
+      </div>
+      <div class="card">
+        <h3>Себестоимости из Excel</h3>
+        <p>Импорт CSV: «артикул; цена», табы, кавычки, запятая как десятичный разделитель.</p>
+      </div>
+      <div class="card">
+        <h3>Не ломается о вёрстку</h3>
+        <p>Авто-поиск поля цены, калибровка одним кликом и ручной режим, если ничего не нашлось.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="honest">
+    <h2>Честно об ограничениях</h2>
+    <ul>
+      <li>Сейчас поддерживается <b>только Wildberries</b>. Ozon — после проверки спроса.</li>
+      <li>Нет API-ключей, серверов, аккаунтов и автоматизации цен: расширение ничего не меняет в кабинете.</li>
+      <li>Комиссии в справочнике — ориентиры; свою ставку можно указать вручную.</li>
+      <li>Расчёты справочные и не заменяют бухгалтерию.</li>
+    </ul>
+  </section>
+
+  <section class="final">
+    <h2>Проверьте на своей цене</h2>
+    <p>Демо открывается без установки и без кабинета.</p>
+    <div class="cta">
+      <a class="btn" href="demo/demo.html">Открыть демо</a>
+      <a class="btn ghost" href="dist/wb-margin-guard-1.2.1.zip" download>Скачать расширение</a>
+    </div>
+  </section>
+</main>
+
+<footer class="bottom">
+  <span>Стоп-минус · версия 1.2.1</span>
+  <span><a href="privacy.html">Политика конфиденциальности</a></span>
+</footer>
+
+</body>
+</html>

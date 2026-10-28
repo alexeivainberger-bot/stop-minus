@@ -1285,7 +1285,6 @@ out.textContent = 'SELFTEST FAIL: JS ' + (e && e.message ? e.message : 'error');
 document.body.appendChild(out);
 });
 var summaryTimer = null;
-var activeScenario = null;
 function scheduleSummary() {
 clearTimeout(summaryTimer);
 summaryTimer = setTimeout(updateSummary, 120);
@@ -1322,20 +1321,13 @@ el.hidden = false;
 var baseBlock =
 '<span class="total-wrap">Общая сумма прибыль-убыток: <b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
 Calc.formatRub(sum) + '</b></span>';
-var scenarioBlock = '';
-if (activeScenario) {
-scenarioBlock =
-'<span class="total-wrap scenario">Сценарий (' + activeScenario.label + '): <b class="total ' +
-(activeScenario.sum < 0 ? 'bad' : 'ok') + '">' + Calc.formatRub(activeScenario.sum) + '</b>' +
-' <span class="hint">убыточных: ' + activeScenario.loss + ' из ' + activeScenario.total + '</span></span>';
-}
 el.innerHTML =
 '<span class="counts">позиций: <b>' + counted + '</b></span>' +
 '<span class="counts">в норме: <b class="ok">' + plus + '</b></span>' +
 '<span class="counts">ниже порога: <b class="warn">' + below + '</b></span>' +
 '<span class="counts">в минусе: <b class="bad">' + minus + '</b></span>' +
 '<span class="counts">со скидкой: <b>' + withDiscount + '</b></span>' +
-'<span class="totals">' + baseBlock + scenarioBlock + '</span>';
+'<span class="totals">' + baseBlock + '</span>';
 }
 function plural(n, forms) {
 var mod10 = n % 10;
@@ -1471,7 +1463,6 @@ if (!input) return;
 input.addEventListener('input', async function () {
 var patch = {};
 patch[key] = input.value;
-activeScenario = null;
 await S.saveSettings(patch);
 if (key === 'promoDiscountPct') applyDiscountToAll(input.value);
 await Engine.reload();
@@ -1507,61 +1498,6 @@ sortAsc = !sortAsc;
 Engine.scan();
 scheduleSummary();
 }
-async function scenario(deltas) {
-var out = document.getElementById('sim-result');
-if (!out) return;
-var data = await S.load();
-var base = data.settings;
-var changed = Object.assign({}, base);
-if (deltas.commission) changed.commissionPct = Calc.toNum(base.commissionPct) + Calc.toNum(deltas.commission);
-if (deltas.logistics) changed.logistics = Calc.toNum(base.logistics) + Calc.toNum(deltas.logistics);
-if (deltas.packaging) changed.packaging = Calc.toNum(base.packaging) + Calc.toNum(deltas.packaging);
-if (deltas.other) changed.otherCosts = Calc.toNum(base.otherCosts) + Calc.toNum(deltas.other);
-var rows = document.querySelectorAll('tr[data-sku]');
-var before = { loss: 0, sum: 0, total: 0 };
-var after = { loss: 0, sum: 0 };
-Array.prototype.forEach.call(rows, function (tr) {
-var priceInput = tr.querySelector('.price-input');
-var price = priceInput ? Calc.toNum(priceInput.value) : 0;
-if (price <= 0) return;
-var costInput = tr.querySelector('.cost-input');
-var cost = costInput ? Calc.toNum(costInput.value) : Calc.toNum(tr.dataset.cost || 0);
-var discInput = tr.querySelector('.disc-input');
-var disc = discInput ? Calc.toNum(discInput.value) : Calc.toNum(tr.dataset.discount || 0);
-var mergedBase = Object.assign({}, base, { price: price, cost: cost });
-var mergedNew = Object.assign({}, changed, { price: price, cost: cost });
-var rb = disc > 0 ? Calc.promoResult(mergedBase, disc) : Calc.compute(mergedBase);
-var rn = disc > 0 ? Calc.promoResult(mergedNew, disc) : Calc.compute(mergedNew);
-before.total++;
-before.sum += rb.profit;
-after.sum += rn.profit;
-if (rb.profit < 0) before.loss++;
-if (rn.profit < 0) after.loss++;
-});
-if (!before.total) {
-out.textContent = 'Добавь хотя бы одну позицию с ценой.';
-return;
-}
-var label = deltas.commission ? 'Комиссия +' + deltas.commission + '%'
-: deltas.logistics ? 'Логистика +' + deltas.logistics + ' ₽'
-: deltas.packaging ? 'Упаковка +' + deltas.packaging + ' ₽'
-: 'Прочие +' + deltas.other + ' ₽';
-var delta = after.sum - before.sum;
-out.innerHTML = '<b>' + label + '</b> → убыточных станет: <b class="bad">' + after.loss + ' из ' + before.total +
-'</b> (сейчас ' + before.loss + ') · общая сумма: <b class="' + (after.sum < 0 ? 'bad' : 'ok') + '">' +
-Calc.formatRub(after.sum) + '</b> вместо ' + Calc.formatRub(before.sum) +
-' · разница <b class="' + (delta < 0 ? 'bad' : 'ok') + '">' + (delta > 0 ? '+' : '') + Calc.formatRub(delta) + '</b>';
-activeScenario = {
-label: label,
-sum: after.sum,
-loss: after.loss,
-total: before.total,
-deltas: deltas
-};
-var applyBtn = document.querySelector('.sim-btn[data-apply]');
-if (applyBtn) applyBtn.hidden = false;
-scheduleSummary();
-}
 function bindButtons() {
 var auto = $('btn-auto');
 var manual = $('btn-manual');
@@ -1584,51 +1520,6 @@ if (auto) auto.addEventListener('click', function () { Engine.activateFirst(); }
 if (addRow) addRow.addEventListener('click', function () { addDemoRow(); });
 var sortBtn = $('btn-sort');
 if (sortBtn) sortBtn.addEventListener('click', function () { sortRows(); });
-var sim = $('sim');
-if (sim) {
-sim.addEventListener('click', async function (ev) {
-var btn = ev.target.closest('.sim-btn');
-if (!btn) return;
-var applyBtn = document.querySelector('.sim-btn[data-apply]');
-if (btn.dataset.reset) {
-activeScenario = null;
-if (applyBtn) applyBtn.hidden = true;
-scheduleSummary();
-var res = $('sim-result');
-if (res) res.textContent = 'Нажми кнопку — покажу, сколько позиций станет убыточными и как изменится общая сумма.';
-return;
-}
-if (btn.dataset.apply) {
-if (!activeScenario || !activeScenario.deltas) return;
-var d = activeScenario.deltas;
-var data = await S.load();
-var s = data.settings;
-var patch = {};
-if (d.commission) patch.commissionPct = Calc.toNum(s.commissionPct) + Calc.toNum(d.commission);
-if (d.logistics) patch.logistics = Calc.toNum(s.logistics) + Calc.toNum(d.logistics);
-if (d.packaging) patch.packaging = Calc.toNum(s.packaging) + Calc.toNum(d.packaging);
-if (d.other) patch.otherCosts = Calc.toNum(s.otherCosts) + Calc.toNum(d.other);
-activeScenario = null;
-if (applyBtn) applyBtn.hidden = true;
-await S.saveSettings(patch);
-Object.keys(patch).forEach(function (key) {
-var input = $(SETTINGS_MAP[key]);
-if (input) input.value = String(patch[key]);
-});
-await Engine.reload();
-scheduleSummary();
-var applyRes = $('sim-result');
-if (applyRes) applyRes.textContent = 'Сценарий применён к настройкам — итог пересчитан по новым тарифам.';
-return;
-}
-scenario({
-commission: btn.dataset.commission,
-logistics: btn.dataset.logistics,
-packaging: btn.dataset.packaging,
-other: btn.dataset.other
-});
-});
-}
 if (manual) manual.addEventListener('click', function () {
 Engine.enableManual({ price: 1990, sku: '123456' });
 });
@@ -1683,7 +1574,6 @@ document.addEventListener('input', function (ev) {
 var t = ev.target;
 if (!t || !t.classList) return;
 if (t.classList.contains('price-input') || t.classList.contains('cost-input') || t.classList.contains('disc-input')) {
-activeScenario = null;
 scheduleSummary();
 }
 });
@@ -1715,7 +1605,6 @@ costInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 }
 if (params.has('promo')) applyDiscountToAll(params.get('promo'));
-if (params.has('sim')) scenario({ commission: params.get('sim') });
 if (params.get('mode') === 'manual') Engine.enableManual({ price: 1990, sku: '123456' });
 else Engine.activateFirst();
 var st = Engine.getState();
@@ -1817,21 +1706,6 @@ sortBtn.click();
 await wait(250);
 var firstSku = document.querySelector('tr[data-sku]').dataset.sku;
 check('сортировка: убыточный сверху', firstSku, '345678');
-}
-var simBtn = document.querySelector('.sim-btn[data-commission]');
-if (simBtn) {
-simBtn.click();
-await wait(300);
-var simText = (document.getElementById('sim-result') || {}).textContent || '';
-check('симулятор посчитал сценарий', simText.indexOf('убыточных станет') > -1, true);
-check('симулятор показал разницу', simText.indexOf('разница') > -1, true);
-check('сценарий виден в итоговой строке', summaryText().indexOf('Сценарий (') > -1, true);
-var resetBtn = document.querySelector('.sim-btn[data-reset]');
-if (resetBtn) {
-resetBtn.click();
-await wait(300);
-check('сброс убрал сценарий', summaryText().indexOf('Сценарий (') === -1, true);
-}
 }
 }
 var out = document.createElement('div');

@@ -82,8 +82,9 @@
         input.dataset.bound = '1';
         input.addEventListener('input', function () {
           var tr = input.closest('tr');
-          var cost = C.toNum ? C.toNum(input.value) : Number(input.value);
-          if (tr) tr.dataset.cost = String(isFinite(cost) ? cost : 0);
+          var value = Number(String(input.value).replace(/[^\d.,]/g, '').replace(',', '.'));
+          var cost = isFinite(value) ? value : 0;
+          if (tr) tr.dataset.cost = String(cost);
           Engine.reload();
         });
       })(inputs[i]);
@@ -172,6 +173,14 @@
     await S.saveSettings({ promoDiscountPct: Number(params.get('promo')) });
   }
 
+  /* ?zero=1 — обнулить все расходы (для проверки «цена минус закупка») */
+  if (params.get('zero') === '1') {
+    await S.saveSettings({
+      commissionPct: 0, taxPct: 0, logistics: 0, packaging: 0,
+      returnCost: 0, otherCosts: 0, buyoutPct: 100, thresholdPct: 0, promoDiscountPct: 0
+    });
+  }
+
   await seedSettings();
   await seedCosts();
   bindSettingsInputs();
@@ -189,6 +198,15 @@
   window.setTimeout(function () {
     var extra = Number(params.get('rows') || 0);
     for (var i = 0; i < extra; i++) addDemoRow();
+
+    if (params.has('cost')) {
+      var costInput = document.querySelector('.cost-input');
+      if (costInput) {
+        costInput.value = params.get('cost');
+        costInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+
     if (params.get('mode') === 'manual') Engine.enableManual({ price: 1990, sku: '123456' });
     else Engine.activateFirst();
     if (params.get('panel') === 'corner') {

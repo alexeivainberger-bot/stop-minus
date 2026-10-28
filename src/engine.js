@@ -99,11 +99,13 @@
 
   function resolveCost(item) {
     if (!item) return null;
+    /* Сначала значение из строки (демо/тестовые данные, где себестоимость
+       можно править прямо в таблице), потом — сохранённые себестоимости. */
+    var fromRow = rowCost(item.row);
+    if (fromRow !== null) return fromRow;
     if (item.sku && state.costs[String(item.sku)] !== undefined) {
       return Number(state.costs[String(item.sku)]);
     }
-    var fromRow = rowCost(item.row);
-    if (fromRow !== null) return fromRow;
     return null;
   }
 

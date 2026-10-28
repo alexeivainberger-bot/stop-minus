@@ -1285,6 +1285,7 @@ out.textContent = 'SELFTEST FAIL: JS ' + (e && e.message ? e.message : 'error');
 document.body.appendChild(out);
 });
 var summaryTimer = null;
+var activeScenario = null;
 function scheduleSummary() {
 clearTimeout(summaryTimer);
 summaryTimer = setTimeout(updateSummary, 120);
@@ -1321,13 +1322,20 @@ el.hidden = false;
 var baseBlock =
 '<span class="total-wrap">Общая сумма прибыль-убыток: <b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
 Calc.formatRub(sum) + '</b></span>';
+var scenarioBlock = '';
+if (activeScenario) {
+scenarioBlock =
+'<span class="total-wrap scenario">Сценарий (' + activeScenario.label + '): <b class="total ' +
+(activeScenario.sum < 0 ? 'bad' : 'ok') + '">' + Calc.formatRub(activeScenario.sum) + '</b>' +
+' <span class="hint">убыточных: ' + activeScenario.loss + ' из ' + activeScenario.total + '</span></span>';
+}
 el.innerHTML =
 '<span class="counts">позиций: <b>' + counted + '</b></span>' +
 '<span class="counts">в норме: <b class="ok">' + plus + '</b></span>' +
 '<span class="counts">ниже порога: <b class="warn">' + below + '</b></span>' +
 '<span class="counts">в минусе: <b class="bad">' + minus + '</b></span>' +
 '<span class="counts">со скидкой: <b>' + withDiscount + '</b></span>' +
-'<span class="totals">' + baseBlock + '</span>';
+'<span class="totals">' + baseBlock + scenarioBlock + '</span>';
 }
 function plural(n, forms) {
 var mod10 = n % 10;
@@ -1463,6 +1471,7 @@ if (!input) return;
 input.addEventListener('input', async function () {
 var patch = {};
 patch[key] = input.value;
+activeScenario = null;
 await S.saveSettings(patch);
 if (key === 'promoDiscountPct') applyDiscountToAll(input.value);
 await Engine.reload();
@@ -1542,6 +1551,13 @@ out.innerHTML = '<b>' + label + '</b> → убыточных станет: <b cl
 '</b> (сейчас ' + before.loss + ') · общая сумма: <b class="' + (after.sum < 0 ? 'bad' : 'ok') + '">' +
 Calc.formatRub(after.sum) + '</b> вместо ' + Calc.formatRub(before.sum) +
 ' · разница <b class="' + (delta < 0 ? 'bad' : 'ok') + '">' + (delta > 0 ? '+' : '') + Calc.formatRub(delta) + '</b>';
+activeScenario = {
+label: label,
+sum: after.sum,
+loss: after.loss,
+total: before.total
+};
+scheduleSummary();
 }
 function bindButtons() {
 var auto = $('btn-auto');
@@ -1571,6 +1587,8 @@ sim.addEventListener('click', function (ev) {
 var btn = ev.target.closest('.sim-btn');
 if (!btn) return;
 if (btn.dataset.reset) {
+activeScenario = null;
+scheduleSummary();
 var res = $('sim-result');
 if (res) res.textContent = 'Нажми кнопку — покажу, сколько позиций станет убыточными и как изменится общая сумма.';
 return;
@@ -1634,7 +1652,10 @@ bindDiscInputs();
 document.addEventListener('input', function (ev) {
 var t = ev.target;
 if (!t || !t.classList) return;
-if (t.classList.contains('price-input') || t.classList.contains('cost-input')) scheduleSummary();
+if (t.classList.contains('price-input') || t.classList.contains('cost-input') || t.classList.contains('disc-input')) {
+activeScenario = null;
+scheduleSummary();
+}
 });
 document.addEventListener('wbmg:promo', function (ev) {
 var pct = ev && ev.detail && typeof ev.detail.pct === 'number' ? ev.detail.pct : null;
@@ -1664,6 +1685,7 @@ costInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 }
 if (params.has('promo')) applyDiscountToAll(params.get('promo'));
+if (params.has('sim')) scenario({ commission: params.get('sim') });
 if (params.get('mode') === 'manual') Engine.enableManual({ price: 1990, sku: '123456' });
 else Engine.activateFirst();
 var st = Engine.getState();
@@ -1771,6 +1793,13 @@ await wait(300);
 var simText = (document.getElementById('sim-result') || {}).textContent || '';
 check('симулятор посчитал сценарий', simText.indexOf('убыточных станет') > -1, true);
 check('симулятор показал разницу', simText.indexOf('разница') > -1, true);
+check('сценарий виден в итоговой строке', summaryText().indexOf('Сценарий (') > -1, true);
+var resetBtn = document.querySelector('.sim-btn[data-reset]');
+if (resetBtn) {
+resetBtn.click();
+await wait(300);
+check('сброс убрал сценарий', summaryText().indexOf('Сценарий (') === -1, true);
+}
 }
 }
 var out = document.createElement('div');

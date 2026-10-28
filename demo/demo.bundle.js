@@ -1555,8 +1555,11 @@ activeScenario = {
 label: label,
 sum: after.sum,
 loss: after.loss,
-total: before.total
+total: before.total,
+deltas: deltas
 };
+var applyBtn = document.querySelector('.sim-btn[data-apply]');
+if (applyBtn) applyBtn.hidden = false;
 scheduleSummary();
 }
 function bindButtons() {
@@ -1583,14 +1586,39 @@ var sortBtn = $('btn-sort');
 if (sortBtn) sortBtn.addEventListener('click', function () { sortRows(); });
 var sim = $('sim');
 if (sim) {
-sim.addEventListener('click', function (ev) {
+sim.addEventListener('click', async function (ev) {
 var btn = ev.target.closest('.sim-btn');
 if (!btn) return;
+var applyBtn = document.querySelector('.sim-btn[data-apply]');
 if (btn.dataset.reset) {
 activeScenario = null;
+if (applyBtn) applyBtn.hidden = true;
 scheduleSummary();
 var res = $('sim-result');
 if (res) res.textContent = 'Нажми кнопку — покажу, сколько позиций станет убыточными и как изменится общая сумма.';
+return;
+}
+if (btn.dataset.apply) {
+if (!activeScenario || !activeScenario.deltas) return;
+var d = activeScenario.deltas;
+var data = await S.load();
+var s = data.settings;
+var patch = {};
+if (d.commission) patch.commissionPct = Calc.toNum(s.commissionPct) + Calc.toNum(d.commission);
+if (d.logistics) patch.logistics = Calc.toNum(s.logistics) + Calc.toNum(d.logistics);
+if (d.packaging) patch.packaging = Calc.toNum(s.packaging) + Calc.toNum(d.packaging);
+if (d.other) patch.otherCosts = Calc.toNum(s.otherCosts) + Calc.toNum(d.other);
+activeScenario = null;
+if (applyBtn) applyBtn.hidden = true;
+await S.saveSettings(patch);
+Object.keys(patch).forEach(function (key) {
+var input = $(SETTINGS_MAP[key]);
+if (input) input.value = String(patch[key]);
+});
+await Engine.reload();
+scheduleSummary();
+var applyRes = $('sim-result');
+if (applyRes) applyRes.textContent = 'Сценарий применён к настройкам — итог пересчитан по новым тарифам.';
 return;
 }
 scenario({
@@ -1649,6 +1677,8 @@ bindButtons();
 bindCostInputs();
 bindTextInputs();
 bindDiscInputs();
+var formulaEl = document.getElementById('formula-version');
+if (formulaEl && Calc && Calc.FORMULA_VERSION) formulaEl.textContent = Calc.FORMULA_VERSION;
 document.addEventListener('input', function (ev) {
 var t = ev.target;
 if (!t || !t.classList) return;
@@ -1715,6 +1745,8 @@ if (a !== e) failures.push(name + ': «' + a + '» вместо «' + e + '»');
 }
 var host = document.getElementById('wbmg-host');
 var shadow = host && host.shadowRoot;
+var formulaText = (document.getElementById('formula-version') || {}).textContent || '';
+check('версия формулы видна в подвале', formulaText, Calc.FORMULA_VERSION);
 if (!shadow) {
 failures.push('панель не создана');
 } else {

@@ -201,6 +201,8 @@
 
   function formatPct(n) {
     var v = toNum(n);
+    /* Меньше 1% показываем с десятой: «0,5%» честнее, чем округлённый «1%». */
+    if (v !== 0 && Math.abs(v) < 1) return v.toFixed(1).replace('.', ',') + '%';
     var rounded = Math.round(v);
     return (rounded === 0 && v < 0 ? 0 : rounded) + '%';
   }

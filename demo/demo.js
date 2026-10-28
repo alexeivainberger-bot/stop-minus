@@ -320,6 +320,16 @@
       range.value = '0';
       range.dispatchEvent(new Event('input', { bubbles: true }));
       check('подсказка максимальной скидки', String(q('.promo-line')).indexOf('45%') > -1, true);
+
+      /* Клик по названию (не по цене) должен переключить панель на другую позицию */
+      var rows = document.querySelectorAll('tr[data-sku]');
+      if (rows.length > 1) {
+        var nameCell = rows[1].querySelector('td:nth-child(2)');
+        if (nameCell) {
+          nameCell.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+          check('клик по строке переключает позицию', q('.price-line .sku'), '#234567');
+        }
+      }
     }
 
     var out = document.createElement('div');

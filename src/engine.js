@@ -440,6 +440,27 @@
       state.overlay.hide();
     });
 
+    /* Клик по любому месту строки (артикул, название, себестоимость)
+       переключает панель на эту позицию — не только клик по цене. */
+    document.addEventListener('click', function (ev) {
+      if (state.calibrating || !state.items.length) return;
+      var target = ev.target;
+      if (!target || target.nodeType !== 1) return;
+      if (target.id === 'wbmg-host' || (target.closest && target.closest('#wbmg-host'))) return;
+      var node = target;
+      var depth = 0;
+      while (node && depth < 6) {
+        for (var i = 0; i < state.items.length; i++) {
+          if (state.items[i].row === node) {
+            if (state.active !== state.items[i]) activate(state.items[i]);
+            return;
+          }
+        }
+        node = node.parentElement;
+        depth++;
+      }
+    }, true);
+
     return state;
   }
 

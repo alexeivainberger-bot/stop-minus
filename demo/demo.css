@@ -147,6 +147,15 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
 
 .summary[hidden] { display: none; }
 .summary b { color: var(--ink); }
+.summary .total-wrap { display: inline-flex; align-items: baseline; gap: 8px; }
+.summary .totals {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  justify-content: flex-end;
+  text-align: right;
+}
 .summary .total-wrap.promo .total { font-size: 20px; }
 .summary .total { font-size: 22px; letter-spacing: -0.02em; }
 .summary .counts { white-space: nowrap; }

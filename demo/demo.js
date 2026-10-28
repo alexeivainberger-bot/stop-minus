@@ -53,22 +53,24 @@
     }
 
     el.hidden = false;
+    var baseBlock =
+      '<span class="total-wrap">Сумма прибыли: <b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
+      Calc.formatRub(sum) + '</b> <span class="hint">по 1 шт каждой позиции</span></span>';
+
     var promoBlock = '';
     if (promoPct > 0) {
       promoBlock =
-        '<span class="total-wrap promo">Со скидкой ' + Math.round(promoPct) + '%: <b class="total ' +
+        '<span class="total-wrap">Со скидкой ' + Math.round(promoPct) + '%: <b class="total ' +
         (promoSum < 0 ? 'bad' : 'ok') + '">' + Calc.formatRub(promoSum) + '</b>' +
         ' <span class="hint">в минусе: ' + promoMinus + ' из ' + counted + '</span></span>';
     }
 
     el.innerHTML =
-      '<span class="total-wrap">Сумма прибыли: <b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
-      Calc.formatRub(sum) + '</b> <span class="hint">если продать по одной штуке каждой позиции</span></span>' +
-      promoBlock +
       '<span class="counts">позиций: <b>' + counted + '</b></span>' +
       '<span class="counts">в норме: <b class="ok">' + plus + '</b></span>' +
       '<span class="counts">ниже порога: <b class="warn">' + below + '</b></span>' +
-      '<span class="counts">в минусе: <b class="bad">' + minus + '</b></span>';
+      '<span class="counts">в минусе: <b class="bad">' + minus + '</b></span>' +
+      '<span class="totals">' + baseBlock + promoBlock + '</span>';
   }
 
   function plural(n, forms) {

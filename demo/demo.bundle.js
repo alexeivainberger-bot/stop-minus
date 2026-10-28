@@ -1563,9 +1563,11 @@ var costInput = tr.querySelector('.cost-input');
 var cost = costInput ? Calc.toNum(costInput.value) : Calc.toNum(tr.dataset.cost || 0);
 var discInput = tr.querySelector('.disc-input');
 var disc = discInput ? Calc.toNum(discInput.value) : Calc.toNum(tr.dataset.discount || 0);
+var qtyInput = tr.querySelector('.qty-input');
+var qty = Math.max(1, Math.round(qtyInput ? Calc.toNum(qtyInput.value) : Calc.toNum(tr.dataset.qty || 1)));
 var merged = Object.assign({}, settings, { price: price, cost: cost });
 var r = disc > 0 ? Calc.promoResult(merged, disc) : Calc.compute(merged);
-tr.dataset.sortProfit = String(r.profit);
+tr.dataset.sortProfit = String(r.profit * qty);
 });
 rows.sort(function (a, b) {
 var pa = Calc.toNum(a.dataset.sortProfit);

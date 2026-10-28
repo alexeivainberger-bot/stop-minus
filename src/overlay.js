@@ -287,12 +287,12 @@
           refs.promoLine.textContent = 'Скидка невозможна: при этой цене уже минус.';
         } else {
           var maxText = 'Без скидки. Максимальная скидка без минуса: ';
-          maxText += (maxZero === null ? '—' : Math.floor(maxZero) + '%');
+          maxText += (maxZero === null ? '—' : C.formatDiscountPct(maxZero));
           if (maxTarget !== null && threshold > 0) {
             if (maxTarget <= 0) {
               maxText += ' · маржа ' + Math.round(threshold) + '% не достигается даже без скидки';
             } else {
-              maxText += ' · до маржи ' + Math.round(threshold) + '%: ' + Math.floor(maxTarget) + '%';
+              maxText += ' · до маржи ' + Math.round(threshold) + '%: ' + C.formatDiscountPct(maxTarget);
             }
           }
           refs.promoLine.textContent = maxText;

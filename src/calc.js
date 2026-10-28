@@ -205,6 +205,15 @@
     return (rounded === 0 && v < 0 ? 0 : rounded) + '%';
   }
 
+  /* Скидка: маленькие значения (< 1%) показываем с десятой, чтобы «0%»
+     не выглядел как «скидки нет вообще». */
+  function formatDiscountPct(n) {
+    var v = toNum(n);
+    if (!(v > 0)) return '0%';
+    if (v < 1) return v.toFixed(1).replace('.', ',') + '%';
+    return Math.floor(v) + '%';
+  }
+
   function warningText(result) {
     if (!result) return null;
     if (result.status === 'loss') {
@@ -235,6 +244,7 @@
     round: round,
     formatRub: formatRub,
     formatPct: formatPct,
+    formatDiscountPct: formatDiscountPct,
     warningText: warningText,
     statusLabel: statusLabel
   };

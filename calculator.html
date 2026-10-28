@@ -283,11 +283,11 @@
         line.className = 'promo-line warnline';
         line.textContent = 'Скидка невозможна: при этой цене уже минус.';
       } else {
-        line.textContent = 'Максимальная скидка без минуса: ' + (maxZero === null ? '—' : Math.floor(maxZero) + '%') +
+        line.textContent = 'Максимальная скидка без минуса: ' + (maxZero === null ? '—' : C.formatDiscountPct(maxZero)) +
           (maxTarget !== null && C.toNum(input.thresholdPct) > 0
             ? (maxTarget <= 0
               ? ' · маржа ' + Math.round(C.toNum(input.thresholdPct)) + '% не достигается даже без скидки'
-              : ' · до маржи ' + Math.round(C.toNum(input.thresholdPct)) + '%: ' + Math.floor(maxTarget) + '%')
+              : ' · до маржи ' + Math.round(C.toNum(input.thresholdPct)) + '%: ' + C.formatDiscountPct(maxTarget))
             : '');
       }
     } else if (promo.status === 'loss') {

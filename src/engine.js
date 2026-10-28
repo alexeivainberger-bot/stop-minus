@@ -66,7 +66,11 @@
     var node = el.parentElement;
     var depth = 0;
     while (node && depth < 4) {
-      if (SKU_RE.test(textOf(node))) return node;
+      /* Не поднимаемся до body/main: иначе «строкой» станет вся страница,
+         в тексте которой есть артикул, — и обычное поле настроек станет «ценой». */
+      if (node === document.body || node === document.documentElement) break;
+      var inputsInside = node.querySelectorAll ? node.querySelectorAll('input').length : 0;
+      if (inputsInside <= 12 && SKU_RE.test(textOf(node))) return node;
       node = node.parentElement;
       depth++;
     }

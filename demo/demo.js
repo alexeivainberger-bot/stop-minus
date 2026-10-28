@@ -227,6 +227,7 @@
       var chips = document.querySelectorAll('.wbmg-chip');
       check('количество чипов', chips.length, 1);
       check('чип', chips[0] && chips[0].textContent, '717 ₽ · 36%');
+      check('кандидатов ровно 3 (настройки не считаются ценой)', Engine.scan().length, 3);
 
       var range = shadow.querySelector('.promo-range');
       range.value = '50';

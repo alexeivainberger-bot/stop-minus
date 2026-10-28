@@ -5,6 +5,62 @@
 
   var S = window.WbMarginStore;
   var Engine = window.WbMarginEngine;
+  var Calc = window.WbMarginCalc;
+
+  var summaryTimer = null;
+
+  /* Итог по всем позициям: сколько в плюсе/в минусе и сумма прибыли
+     (по одной штуке каждой позиции — количества в демо нет). */
+  function scheduleSummary() {
+    clearTimeout(summaryTimer);
+    summaryTimer = setTimeout(updateSummary, 120);
+  }
+
+  async function updateSummary() {
+    var el = document.getElementById('summary');
+    if (!el) return;
+    var data = await S.load();
+    var settings = data.settings;
+    var rows = document.querySelectorAll('tr[data-sku]');
+    var plus = 0, minus = 0, below = 0, sum = 0, counted = 0;
+
+    Array.prototype.forEach.call(rows, function (tr) {
+      var priceInput = tr.querySelector('.price-input');
+      var price = priceInput ? Calc.toNum(priceInput.value) : 0;
+      if (price <= 0) return;
+      var costInput = tr.querySelector('.cost-input');
+      var cost = costInput ? Calc.toNum(costInput.value) : Calc.toNum(tr.dataset.cost || 0);
+      var merged = Object.assign({}, settings, { price: price, cost: cost });
+      var r = Calc.compute(merged);
+      counted++;
+      sum += r.profit;
+      if (r.profit < 0) minus++;
+      else if (r.marginPct < Calc.toNum(settings.thresholdPct)) below++;
+      else plus++;
+    });
+
+    if (counted < 2) {
+      el.hidden = true;
+      return;
+    }
+
+    el.hidden = false;
+    el.innerHTML =
+      '<b>Итого по ' + counted + ' ' + plural(counted, ['позиции', 'позициям', 'позициям']) + '</b>' +
+      '<span>в плюсе: <b class="ok">' + plus + '</b></span>' +
+      '<span>ниже порога: <b class="warn">' + below + '</b></span>' +
+      '<span>в минусе: <b class="bad">' + minus + '</b></span>' +
+      '<span>сумма прибыли: <b class="' + (sum < 0 ? 'bad' : 'ok') + '">' + Calc.formatRub(sum) + '</b>' +
+      ' <span class="hint">— если продать по одной штуке каждой позиции</span></span>';
+  }
+
+  function plural(n, forms) {
+    var mod10 = n % 10;
+    var mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return forms[0];
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return forms[1];
+    return forms[2];
+  }
 
   var SETTINGS_MAP = {
     commissionPct: 's-commission',
@@ -63,6 +119,7 @@
     tbody.appendChild(tr);
     bindCostInputs();
     Engine.scan();
+    scheduleSummary();
     var input = tr.querySelector('input');
     try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
     input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -100,6 +157,7 @@
         patch[key] = input.value;
         await S.saveSettings(patch);
         await Engine.reload();
+        scheduleSummary();
       });
     });
   }
@@ -122,6 +180,7 @@
         var tr = button.closest('tr');
         if (tr) tr.remove();
         Engine.scan();
+        scheduleSummary();
       });
     }
 
@@ -186,6 +245,11 @@
   bindSettingsInputs();
   bindButtons();
   bindCostInputs();
+  document.addEventListener('input', function (ev) {
+    var t = ev.target;
+    if (!t || !t.classList) return;
+    if (t.classList.contains('price-input') || t.classList.contains('cost-input')) scheduleSummary();
+  });
 
   await Engine.init({});
 
@@ -214,6 +278,7 @@
       var st = Engine.getState();
       if (st.overlay) st.overlay.pinCorner();
     }
+    scheduleSummary();
   }, 200);
 
   if (params.get('selftest') === '1') {

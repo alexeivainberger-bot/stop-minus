@@ -37,6 +37,9 @@
     '.price-line{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:#6b6355;border-top:1px dashed #e6ddcf;padding-top:8px}',
     '.price-line b{font-weight:700}',
     '.price-line .sku{color:#a49a86}',
+    '.compare{margin-top:7px;padding:6px 8px;border-radius:7px;background:rgba(0,0,0,.04);font-size:11.5px;color:#5d564a;line-height:1.45}',
+    '.compare b{color:#3a352c}',
+    '.compare[hidden]{display:none}',
     '.warn{margin-top:10px;padding:8px 10px;border-radius:8px;font-weight:700;font-size:12.5px;background:#ffeaea;color:#b02525;line-height:1.35}',
     '.warn[data-status="below"]{background:#fff7e3;color:#8a5a00}',
     '.warn[hidden]{display:none}',
@@ -82,6 +85,7 @@
     '      <div><span>ROI</span><b class="roi">—</b></div>',
     '    </div>',
     '    <div class="price-line"><span>Цена <b class="price">—</b></span><span class="sku">—</span></div>',
+    '    <div class="compare" hidden></div>',
     '    <div class="promo">',
     '      <div class="promo-head"><span>Акция: скидка</span><b class="promo-pct">0%</b></div>',
     '      <input class="promo-range" type="range" min="0" max="100" step="1" value="0">',
@@ -127,6 +131,7 @@
       roi: panel.querySelector('.metrics .roi'),
       price: panel.querySelector('.price-line .price'),
       sku: panel.querySelector('.price-line .sku'),
+      compare: panel.querySelector('.compare'),
       promoRange: panel.querySelector('.promo-range'),
       promoPct: panel.querySelector('.promo-pct'),
       promoLine: panel.querySelector('.promo-line'),
@@ -215,6 +220,21 @@
         : C.formatRub(result.price);
       refs.sku.textContent = sku ? '#' + sku : '—';
       if (refs.profitLabel) refs.profitLabel.textContent = showPromo ? 'Прибыль со скидкой' : 'Чистая прибыль';
+
+      /* Явное сравнение «без скидки → со скидкой», чтобы не приходилось
+         сопоставлять числа из разных мест. */
+      if (refs.compare) {
+        if (showPromo) {
+          var delta = C.round(eff.profit - result.profit, 2);
+          refs.compare.hidden = false;
+          refs.compare.innerHTML = 'Без скидки: <b>' + C.formatRub(result.profit) + '</b> · ' +
+            'со скидкой ' + Math.round(promoPct) + '%: <b>' + C.formatRub(eff.profit) + '</b> · ' +
+            'разница: <b>' + (delta > 0 ? '+' : '') + C.formatRub(delta) + '</b>';
+        } else {
+          refs.compare.hidden = true;
+          refs.compare.textContent = '';
+        }
+      }
 
       /* При включённой скидке отдельная плашка «продажа в минус» не нужна:
          стоп-сигнал уже есть в строке акции. */

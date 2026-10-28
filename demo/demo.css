@@ -94,11 +94,12 @@ input:focus {
 
 main { padding: 18px 28px 0; }
 
-/* Режим «с правой колонкой»: место под панель, чтобы она не закрывала таблицу.
-   Используется для скриншотов магазина: demo.html?panel=corner */
-body.with-rail .settings,
-body.with-rail main {
-  max-width: calc(100% - 380px);
+/* Правая колонка под панель — только на широких экранах, иначе таблица сжимается. */
+@media (min-width: 1400px) {
+  body.with-rail .settings,
+  body.with-rail main {
+    max-width: calc(100% - 380px);
+  }
 }
 
 .page-head {
@@ -196,7 +197,11 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
 
 .price-input { max-width: 130px; font-weight: 700; }
 
-.cost-input { max-width: 120px; }
+.cost-input { max-width: 110px; }
+.price-table td, .price-table th { white-space: nowrap; }
+.price-input { max-width: 110px; }
+.art-input { max-width: 110px; }
+.name-input { width: 100%; min-width: 150px; }
 
 .row-del {
   margin-left: 8px;

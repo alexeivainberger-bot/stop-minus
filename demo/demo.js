@@ -23,6 +23,7 @@
     var settings = data.settings;
     var rows = document.querySelectorAll('tr[data-sku]');
     var plus = 0, minus = 0, below = 0, sum = 0, counted = 0;
+    var promoPct = Calc.toNum(settings.promoDiscountPct);
 
     Array.prototype.forEach.call(rows, function (tr) {
       var priceInput = tr.querySelector('.price-input');
@@ -31,7 +32,7 @@
       var costInput = tr.querySelector('.cost-input');
       var cost = costInput ? Calc.toNum(costInput.value) : Calc.toNum(tr.dataset.cost || 0);
       var merged = Object.assign({}, settings, { price: price, cost: cost });
-      var r = Calc.compute(merged);
+      var r = promoPct > 0 ? Calc.promoResult(merged, promoPct) : Calc.compute(merged);
       counted++;
       sum += r.profit;
       if (r.profit < 0) minus++;
@@ -45,8 +46,9 @@
     }
 
     el.hidden = false;
+    var label = promoPct > 0 ? 'Сумма прибыли со скидкой ' + Math.round(promoPct) + '%: ' : 'Сумма прибыли: ';
     var baseBlock =
-      '<span class="total-wrap">Сумма прибыли: <b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
+      '<span class="total-wrap">' + label + '<b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
       Calc.formatRub(sum) + '</b> <span class="hint">по 1 шт каждой позиции</span></span>';
 
     el.innerHTML =
@@ -112,8 +114,8 @@
     tr.dataset.cost = '500';
     tr.dataset.demoAdded = '1';
     tr.innerHTML =
-      '<td class="mono">' + article + '</td>' +
-      '<td>Новый товар ' + index + '</td>' +
+      '<td class="mono"><input class="art-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="' + article + '"></td>' +
+      '<td><input class="name-input" data-wbmg-ignore="1" type="text" value="Новый товар ' + index + '"></td>' +
       '<td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="500"></td>' +
       '<td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="1490"></td>' +
       '<td class="num muted">0% <button type="button" class="row-del" title="Удалить строку">✕</button></td>';
@@ -121,6 +123,7 @@
     var del = tr.querySelector('.row-del');
     tbody.appendChild(tr);
     bindCostInputs();
+    bindTextInputs();
     Engine.scan();
     scheduleSummary();
     var input = tr.querySelector('input');
@@ -148,6 +151,24 @@
           Engine.reload();
         });
       })(inputs[i]);
+    }
+  }
+
+  /* Артикул и название тоже редактируемые: артикул уходит в data-sku строки. */
+  function bindTextInputs() {
+    var articles = document.querySelectorAll('.art-input');
+    for (var i = 0; i < articles.length; i++) {
+      (function (input) {
+        if (input.dataset.bound) return;
+        input.dataset.bound = '1';
+        input.addEventListener('input', function () {
+          var tr = input.closest('tr');
+          if (!tr) return;
+          tr.dataset.sku = String(input.value).replace(/\D/g, '');
+          Engine.reload();
+          scheduleSummary();
+        });
+      })(articles[i]);
     }
   }
 
@@ -248,6 +269,7 @@
   bindSettingsInputs();
   bindButtons();
   bindCostInputs();
+  bindTextInputs();
   document.addEventListener('input', function (ev) {
     var t = ev.target;
     if (!t || !t.classList) return;
@@ -295,7 +317,14 @@
   }, 200);
 
   if (params.get('selftest') === '1') {
-    window.setTimeout(runSelfTest, 900);
+    window.setTimeout(function () {
+      runSelfTest().catch(function (err) {
+        var out = document.createElement('div');
+        out.id = 'selftest';
+        out.textContent = 'SELFTEST FAIL: ' + (err && err.message ? err.message : String(err));
+        document.body.appendChild(out);
+      });
+    }, 900);
   }
 
   /* Сквозная проверка того, что реально отрисовано: панель, цифры, чип, стоп-сигнал.
@@ -345,21 +374,24 @@
         }
       }
 
-      /* Ползунок скидки синхронизирует поле настроек, но на итог не влияет */
+      /* Скидка меняет итог и чипы: проверяем, что сумма пересчиталась */
       var summaryText = function () {
         var el = document.getElementById('summary');
         return el ? el.textContent : '';
       };
+      var beforePromo = summaryText();
       range.value = '30';
       range.dispatchEvent(new Event('input', { bubbles: true }));
       await wait(300);
       check('поле скидки синхронизировано', document.getElementById('s-promo').value, '30');
-      check('итог без строки про скидку', summaryText().indexOf('Со скидкой') === -1, true);
+      check('итог помечен скидкой', summaryText().indexOf('со скидкой 30%') > -1, true);
+      check('итог изменился из-за скидки', summaryText() !== beforePromo, true);
 
       range.value = '0';
       range.dispatchEvent(new Event('input', { bubbles: true }));
       await wait(300);
       check('поле скидки обнулилось', document.getElementById('s-promo').value, '0');
+      check('итог вернулся к базовому', summaryText().indexOf('со скидкой') === -1, true);
     }
 
     var out = document.createElement('div');

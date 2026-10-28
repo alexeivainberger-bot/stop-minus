@@ -227,9 +227,15 @@
     merged.price = price;
     merged.cost = cost;
     var result = C.compute(merged);
+    var promoPct = C.toNum(state.settings.promoDiscountPct);
+    if (promoPct > 0) {
+      result = C.promoResult(merged, promoPct);
+      chip.title = 'Со скидкой ' + Math.round(promoPct) + '%: ' + C.formatRub(result.profit) + ' · ' + C.formatPct(result.marginPct);
+    } else {
+      chip.title = 'Прибыль и маржа при цене ' + C.formatRub(result.price);
+    }
     chip.dataset.status = result.status;
     chip.textContent = C.formatRub(result.profit) + ' · ' + C.formatPct(result.marginPct);
-    chip.title = 'Прибыль и маржа при цене ' + C.formatRub(result.price);
   }
 
   function decorateAll() {

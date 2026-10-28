@@ -1409,6 +1409,7 @@ input.value = data.settings[key];
 });
 var select = $('s-marketplace');
 if (select) select.value = data.settings.marketplace || 'wb';
+document.body.dataset.marketplace = data.settings.marketplace || 'wb';
 return patch;
 }
 async function seedCosts() {
@@ -1581,6 +1582,7 @@ var marketplace = $('s-marketplace');
 if (marketplace) {
 marketplace.addEventListener('change', async function () {
 var patch = marketplacePatch(marketplace.value);
+document.body.dataset.marketplace = marketplace.value;
 await S.saveSettings(patch);
 Object.keys(patch).forEach(function (key) {
 if (key === 'marketplace') return;
@@ -1677,6 +1679,13 @@ costInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 }
 if (params.has('promo')) applyDiscountToAll(params.get('promo'));
+if (params.has('mp')) {
+var mpSelect = $('s-marketplace');
+if (mpSelect) {
+mpSelect.value = params.get('mp');
+mpSelect.dispatchEvent(new Event('change', { bubbles: true }));
+}
+}
 if (params.get('mode') === 'manual') Engine.enableManual({ price: 1990, sku: '123456' });
 else Engine.activateFirst();
 var st = Engine.getState();
@@ -1713,6 +1722,8 @@ mpSelect.value = 'ozon';
 mpSelect.dispatchEvent(new Event('change', { bubbles: true }));
 await wait(300);
 check('пресет Ozon подставил комиссию', document.getElementById('s-commission').value, '18');
+check('тема Ozon применилась', document.body.dataset.marketplace, 'ozon');
+check('акцент Ozon синий', getComputedStyle(document.body).getPropertyValue('--accent').trim(), '#005bff');
 mpSelect.value = 'wb';
 mpSelect.dispatchEvent(new Event('change', { bubbles: true }));
 await wait(300);

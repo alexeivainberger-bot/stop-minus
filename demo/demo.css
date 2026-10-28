@@ -6,6 +6,36 @@
   --line: #e6ddcf;
   --accent: #7b1fa2;
   --accent-soft: #f3e8f8;
+  --top-bg: #241a2e;
+  --accent-contrast: #fff;
+}
+
+/* Цветовая тема под маркетплейс */
+body[data-marketplace="wb"] {
+  --accent: #7b1fa2;
+  --accent-soft: #f3e8f8;
+  --top-bg: #241a2e;
+}
+
+body[data-marketplace="ozon"] {
+  --accent: #005bff;
+  --accent-soft: #e8f0ff;
+  --accent-contrast: #fff;
+  --top-bg: #001a34;
+}
+
+body[data-marketplace="yandex"] {
+  --accent: #fc3f1d;
+  --accent-soft: #ffe9e6;
+  --accent-contrast: #fff;
+  --top-bg: #1c1c1c;
+}
+
+body[data-marketplace="custom"] {
+  --accent: #4a4a4a;
+  --accent-soft: #efefef;
+  --accent-contrast: #fff;
+  --top-bg: #2b2b2b;
 }
 
 * { box-sizing: border-box; }
@@ -27,7 +57,7 @@ body.bg-white { background: #fff; }
   gap: 6px 18px;
   align-items: baseline;
   padding: 14px 28px;
-  background: #241a2e;
+  background: var(--top-bg);
   color: #fff;
 }
 
@@ -123,13 +153,13 @@ button {
   border: 0;
   border-radius: 8px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   cursor: pointer;
 }
 
 button:hover { filter: brightness(0.94); }
 
-button.secondary { background: var(--accent-soft); color: #55126f; }
+button.secondary { background: var(--accent-soft); color: var(--accent); }
 button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
 
 .summary {
@@ -142,7 +172,7 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
   padding: 14px 18px;
   background: #fff;
   border: 1px solid var(--line);
-  border-left: 4px solid #7b1fa2;
+  border-left: 4px solid var(--accent);
   border-radius: 10px;
   font-size: 13px;
   color: #6b6355;

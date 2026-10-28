@@ -410,6 +410,8 @@
       onPromoChange: function (pct) {
         state.settings.promoDiscountPct = pct;
         S.saveSettings({ promoDiscountPct: pct });
+        /* Пересчитываем не только активную строку, но и чипы всех позиций. */
+        decorateAll();
         if (state.active) activate(state.active);
       },
       onManualApply: function (payload) {

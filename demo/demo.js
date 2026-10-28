@@ -380,12 +380,15 @@
         return el ? el.textContent : '';
       };
       var beforePromo = summaryText();
+      var chipBefore = (document.querySelector('.wbmg-chip') || {}).textContent || '';
       range.value = '30';
       range.dispatchEvent(new Event('input', { bubbles: true }));
       await wait(300);
       check('поле скидки синхронизировано', document.getElementById('s-promo').value, '30');
       check('итог помечен скидкой', summaryText().indexOf('со скидкой 30%') > -1, true);
       check('итог изменился из-за скидки', summaryText() !== beforePromo, true);
+      var chipAfter = (document.querySelector('.wbmg-chip') || {}).textContent || '';
+      check('чип пересчитался со скидкой', chipAfter !== chipBefore, true);
 
       range.value = '0';
       range.dispatchEvent(new Event('input', { bubbles: true }));

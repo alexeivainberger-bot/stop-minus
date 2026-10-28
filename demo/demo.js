@@ -46,12 +46,12 @@
 
     el.hidden = false;
     el.innerHTML =
-      '<b>Итого по ' + counted + ' ' + plural(counted, ['позиции', 'позициям', 'позициям']) + '</b>' +
-      '<span>в норме: <b class="ok">' + plus + '</b></span>' +
-      '<span>ниже порога: <b class="warn">' + below + '</b></span>' +
-      '<span>в минусе: <b class="bad">' + minus + '</b></span>' +
-      '<span>сумма прибыли: <b class="' + (sum < 0 ? 'bad' : 'ok') + '">' + Calc.formatRub(sum) + '</b>' +
-      ' <span class="hint">— если продать по одной штуке каждой позиции</span></span>';
+      '<span class="total-wrap">Сумма прибыли: <b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
+      Calc.formatRub(sum) + '</b> <span class="hint">если продать по одной штуке каждой позиции</span></span>' +
+      '<span class="counts">позиций: <b>' + counted + '</b></span>' +
+      '<span class="counts">в норме: <b class="ok">' + plus + '</b></span>' +
+      '<span class="counts">ниже порога: <b class="warn">' + below + '</b></span>' +
+      '<span class="counts">в минусе: <b class="bad">' + minus + '</b></span>';
   }
 
   function plural(n, forms) {

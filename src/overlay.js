@@ -122,6 +122,7 @@
       panel: panel,
       mode: panel.querySelector('.mode'),
       value: panel.querySelector('.profit .value'),
+      profitLabel: panel.querySelector('.profit .label'),
       margin: panel.querySelector('.metrics .margin'),
       roi: panel.querySelector('.metrics .roi'),
       price: panel.querySelector('.price-line .price'),
@@ -184,18 +185,41 @@
       }
       refs.promoRange.disabled = false;
 
-      refs.panel.dataset.status = result.status;
-      refs.value.textContent = C.formatRub(result.profit);
-      refs.margin.textContent = C.formatPct(result.marginPct);
-      refs.roi.textContent = C.formatPct(result.roiPct);
-      refs.price.textContent = C.formatRub(result.price);
-      refs.sku.textContent = sku ? '#' + sku : '—';
+      /* Симуляция акции считаем ДО вывода цифр: при скидке > 0 главные числа
+         показывают экономику уже со скидкой, а не только базовую цену. */
+      var promoPct = (opts && opts.promoPct !== undefined) ? C.toNum(opts.promoPct) : (currentPromo === null ? C.toNum(settings.promoDiscountPct) : currentPromo);
+      currentPromo = promoPct;
+      refs.promoRange.value = String(Math.round(promoPct));
+      refs.promoPct.textContent = Math.round(promoPct) + '%';
 
-      var warn = C.warningText(result);
+      var baseForDiscount = {};
+      for (var pk in settings) baseForDiscount[pk] = settings[pk];
+      baseForDiscount.price = result.price;
+      baseForDiscount.cost = result.cost;
+
+      var promo = C.promoResult(baseForDiscount, promoPct);
+      var threshold = C.toNum(result.thresholdPct);
+      var maxZero = C.maxDiscountPct(baseForDiscount, 0);
+      var maxTarget = C.maxDiscountPct(baseForDiscount, threshold);
+
+      var showPromo = promoPct > 0;
+      var eff = showPromo ? promo : result;
+
+      refs.panel.dataset.status = eff.status;
+      refs.value.textContent = C.formatRub(eff.profit);
+      refs.margin.textContent = C.formatPct(eff.marginPct);
+      refs.roi.textContent = C.formatPct(eff.roiPct);
+      refs.price.textContent = showPromo
+        ? C.formatRub(result.price) + ' → ' + C.formatRub(promo.discountedPrice)
+        : C.formatRub(result.price);
+      refs.sku.textContent = sku ? '#' + sku : '—';
+      if (refs.profitLabel) refs.profitLabel.textContent = showPromo ? 'Прибыль со скидкой' : 'Чистая прибыль';
+
+      var warn = C.warningText(eff);
       if (warn) {
         refs.warn.hidden = false;
         refs.warn.textContent = warn;
-        refs.warn.dataset.status = result.status === 'below' ? 'below' : 'loss';
+        refs.warn.dataset.status = eff.status === 'below' ? 'below' : 'loss';
       } else {
         refs.warn.hidden = true;
         refs.warn.textContent = '';
@@ -212,7 +236,6 @@
         buyoutPct: result.buyoutPct
       };
       var minZero = C.priceForMargin(0, base);
-      var threshold = C.toNum(result.thresholdPct);
       var minTarget = C.priceForMargin(threshold, base);
       if (result.price <= 0) {
         refs.hint.textContent = minZero ? 'Мин. цена «в ноль»: ' + C.formatRub(minZero) : '';
@@ -224,30 +247,15 @@
       }
 
       clearBreakdown();
-      addBreakRow('Себестоимость', '-' + C.formatRub(result.cost));
-      addBreakRow('Упаковка', '-' + C.formatRub(result.packaging));
-      addBreakRow('Логистика', '-' + C.formatRub(result.logistics));
-      addBreakRow('Комиссия ' + Math.round(result.commissionPct) + '%', '-' + C.formatRub(result.commission));
-      addBreakRow('Налог ' + Math.round(result.taxPct) + '%', '-' + C.formatRub(result.tax));
-      addBreakRow('Возвраты (невыкуп ' + Math.round(100 - result.buyoutPct) + '%)', '-' + C.formatRub(result.returnsCost));
-      addBreakRow('Прочие', '-' + C.formatRub(result.otherCosts));
-      addBreakRow('Прибыль', C.formatRub(result.profit), true);
+      addBreakRow('Себестоимость', '-' + C.formatRub(eff.cost));
+      addBreakRow('Упаковка', '-' + C.formatRub(eff.packaging));
+      addBreakRow('Логистика', '-' + C.formatRub(eff.logistics));
+      addBreakRow('Комиссия ' + Math.round(eff.commissionPct) + '%', '-' + C.formatRub(eff.commission));
+      addBreakRow('Налог ' + Math.round(eff.taxPct) + '%', '-' + C.formatRub(eff.tax));
+      addBreakRow('Возвраты (невыкуп ' + Math.round(100 - eff.buyoutPct) + '%)', '-' + C.formatRub(eff.returnsCost));
+      addBreakRow('Прочие', '-' + C.formatRub(eff.otherCosts));
+      addBreakRow(showPromo ? 'Прибыль со скидкой' : 'Прибыль', C.formatRub(eff.profit), true);
 
-      /* Симуляция акции: скидка уменьшает цену, а комиссия и налог считаются
-         уже от цены со скидкой — поэтому маржа падает быстрее, чем кажется. */
-      var promoPct = (opts && opts.promoPct !== undefined) ? C.toNum(opts.promoPct) : (currentPromo === null ? C.toNum(settings.promoDiscountPct) : currentPromo);
-      currentPromo = promoPct;
-      refs.promoRange.value = String(Math.round(promoPct));
-      refs.promoPct.textContent = Math.round(promoPct) + '%';
-
-      var baseForDiscount = {};
-      for (var pk in settings) baseForDiscount[pk] = settings[pk];
-      baseForDiscount.price = result.price;
-      baseForDiscount.cost = result.cost;
-
-      var promo = C.promoResult(baseForDiscount, promoPct);
-      var maxZero = C.maxDiscountPct(baseForDiscount, 0);
-      var maxTarget = C.maxDiscountPct(baseForDiscount, threshold);
       refs.promoLine.className = 'promo-line';
 
       if (promoPct <= 0) {

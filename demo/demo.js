@@ -60,11 +60,6 @@
       '<td class="num muted">0% <button type="button" class="row-del" title="Удалить строку">✕</button></td>';
 
     var del = tr.querySelector('.row-del');
-    del.addEventListener('click', function () {
-      tr.remove();
-      Engine.scan();
-    });
-
     tbody.appendChild(tr);
     bindCostInputs();
     Engine.scan();
@@ -115,6 +110,20 @@
     var reset = $('btn-reset');
     var addRow = $('btn-add-row');
 
+    /* Удаление строк — один обработчик на таблицу (работает и для базовых,
+       и для добавленных строк). */
+    var tbody = document.querySelector('.price-table tbody');
+    if (tbody) {
+      tbody.addEventListener('click', function (ev) {
+        var button = ev.target.closest('.row-del');
+        if (!button) return;
+        ev.preventDefault();
+        var tr = button.closest('tr');
+        if (tr) tr.remove();
+        Engine.scan();
+      });
+    }
+
     if (auto) auto.addEventListener('click', function () { Engine.activateFirst(); });
     if (addRow) addRow.addEventListener('click', function () { addDemoRow(); });
     if (manual) manual.addEventListener('click', function () {
@@ -122,17 +131,6 @@
     });
     if (calibrate) calibrate.addEventListener('click', function () { Engine.startCalibration(); });
     if (reset) reset.addEventListener('click', async function () {
-      removeDemoRows();
-      var baseCosts = { '123456': '620', '234567': '1100', '345678': '150' };
-      Array.prototype.forEach.call(document.querySelectorAll('.cost-input'), function (input) {
-        var tr = input.closest('tr');
-        if (!tr || tr.dataset.demoAdded) return;
-        var value = baseCosts[tr.dataset.sku];
-        if (value !== undefined) {
-          input.value = value;
-          tr.dataset.cost = value;
-        }
-      });
       await S.saveSettings({
         commissionPct: 15,
         taxPct: 6,
@@ -144,8 +142,7 @@
         otherCosts: 20,
         promoDiscountPct: 0
       });
-      await seedSettings();
-      await Engine.reload();
+      location.reload();
     });
   }
 

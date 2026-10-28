@@ -124,7 +124,7 @@
     </div>
 
     <aside class="result" id="result" data-status="ok">
-      <div class="profit"><span>Чистая прибыль</span><b id="r-profit">—</b></div>
+      <div class="profit"><span id="r-label">Чистая прибыль</span><b id="r-profit">—</b></div>
       <div class="metrics">
         <div><span>Маржа</span><b id="r-margin">—</b></div>
         <div><span>ROI</span><b id="r-roi">—</b></div>
@@ -257,6 +257,27 @@
     $('r-promo-pct').textContent = Math.round(C.toNum(input.promoDiscountPct)) + '%';
 
     var d = C.toNum(input.promoDiscountPct);
+
+    /* При скидке главные цифры показывают экономику уже со скидкой */
+    if (d > 0) {
+      box.dataset.status = promo.status;
+      $('r-profit').textContent = C.formatRub(promo.profit);
+      $('r-margin').textContent = C.formatPct(promo.marginPct);
+      $('r-roi').textContent = C.formatPct(promo.roiPct);
+      $('r-label').textContent = 'Прибыль со скидкой';
+      var promoWarn = C.warningText(promo);
+      if (promoWarn) {
+        warnEl.hidden = false;
+        warnEl.textContent = promoWarn;
+        warnEl.dataset.status = promo.status === 'below' ? 'below' : 'loss';
+      } else {
+        warnEl.hidden = true;
+        warnEl.textContent = '';
+      }
+    } else {
+      $('r-label').textContent = 'Чистая прибыль';
+    }
+
     if (d <= 0) {
       if (maxZero !== null && maxZero <= 0) {
         line.className = 'promo-line warnline';

@@ -25,9 +25,10 @@ body[data-marketplace="ozon"] {
 }
 
 body[data-marketplace="yandex"] {
-  --accent: #fc3f1d;
-  --accent-soft: #ffe9e6;
-  --accent-contrast: #fff;
+  --accent: #ffcc00;
+  --accent-soft: #fff6d6;
+  --accent-contrast: #1a1a1a;
+  --brand-line: #fc3f1d;
   --top-bg: #1c1c1c;
 }
 
@@ -172,7 +173,7 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
   padding: 14px 18px;
   background: #fff;
   border: 1px solid var(--line);
-  border-left: 4px solid var(--accent);
+  border-left: 4px solid var(--brand-line, var(--accent));
   border-radius: 10px;
   font-size: 13px;
   color: #6b6355;

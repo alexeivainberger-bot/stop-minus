@@ -7,6 +7,24 @@
   --accent-soft: #f3e8f8;
   --ok: #1e7a4b;
   --bad: #c22a2a;
+  --accent-contrast: #fff;
+}
+
+body[data-marketplace="ozon"] {
+  --accent: #005bff;
+  --accent-soft: #e8f0ff;
+  --accent-contrast: #fff;
+}
+
+body[data-marketplace="yandex"] {
+  --accent: #ffcc00;
+  --accent-soft: #fff6d6;
+  --accent-contrast: #1a1a1a;
+}
+
+body[data-marketplace="custom"] {
+  --accent: #4a4a4a;
+  --accent-soft: #efefef;
 }
 
 * { box-sizing: border-box; }
@@ -67,7 +85,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 24px 64px; }
   padding: 13px 22px;
   border-radius: 12px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-contrast, #fff);
   text-decoration: none;
   font-weight: 700;
   font-size: 15px;
@@ -77,7 +95,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 24px 64px; }
 
 .btn.ghost {
   background: var(--accent-soft);
-  color: #55126f;
+  color: var(--accent);
 }
 
 .fine { margin: 14px 0 0; font-size: 13px; color: var(--muted); }

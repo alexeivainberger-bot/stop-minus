@@ -27,7 +27,7 @@
     <label>Возврат, ₽<input id="s-return" type="number" step="1" min="0"></label>
     <label>Выкуп, %<input id="s-buyout" type="number" step="1" min="0" max="100"></label>
     <label>Прочие, ₽<input id="s-other" type="number" step="1" min="0"></label>
-    <label>Скидка акции, %<input id="s-promo" type="number" step="1" min="0" max="100"></label>
+    <label>Скидка для всех, %<input id="s-promo" type="number" step="1" min="0" max="100"></label>
   </div>
 </section>
 
@@ -38,6 +38,7 @@
     <h1>Цены и скидки</h1>
     <div class="actions">
       <button id="btn-add-row">+ Добавить строку</button>
+      <button id="btn-sort" class="secondary">Убыточные вперёд</button>
       <button id="btn-auto" class="secondary">Авто-режим</button>
       <button id="btn-manual" class="secondary">Ручной режим</button>
       <button id="btn-calibrate" class="secondary">Калибровка</button>
@@ -52,7 +53,7 @@
         <th>Наименование</th>
         <th>Себестоимость</th>
         <th>Цена, ₽</th>
-        <th>Скидка</th>
+        <th>Скидка, %</th>
       </tr>
     </thead>
     <tbody>
@@ -61,30 +62,30 @@
         <td><input class="name-input" data-wbmg-ignore="1" type="text" value="Футболка oversize, чёрная"></td>
         <td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="620"></td>
         <td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="1990"></td>
-        <td class="num muted">0% <button type="button" class="row-del" title="Удалить строку">✕</button></td>
+        <td class="num"><input class="disc-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="0"> <button type="button" class="row-del" title="Удалить строку">✕</button></td>
       </tr>
       <tr data-sku="234567" data-cost="1100">
         <td class="mono"><input class="art-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="234567"></td>
         <td><input class="name-input" data-wbmg-ignore="1" type="text" value="Худи с начёсом, серое"></td>
         <td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="1100"></td>
         <td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="2990"></td>
-        <td class="num muted">0% <button type="button" class="row-del" title="Удалить строку">✕</button></td>
+        <td class="num"><input class="disc-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="0"> <button type="button" class="row-del" title="Удалить строку">✕</button></td>
       </tr>
       <tr data-sku="345678" data-cost="150">
         <td class="mono"><input class="art-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="345678"></td>
         <td><input class="name-input" data-wbmg-ignore="1" type="text" value="Носки, комплект 5 пар"></td>
         <td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="150"></td>
         <td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="390"></td>
-        <td class="num muted">0% <button type="button" class="row-del" title="Удалить строку">✕</button></td>
+        <td class="num"><input class="disc-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="0"> <button type="button" class="row-del" title="Удалить строку">✕</button></td>
       </tr>
     </tbody>
   </table>
 </main>
 
-<script src="../src/calc.js?v=1.5.1"></script>
-<script src="../src/store.js?v=1.5.1"></script>
-<script src="../src/overlay.js?v=1.5.1"></script>
-<script src="../src/engine.js?v=1.5.1"></script>
-<script src="demo.js?v=1.5.1"></script>
+<script src="../src/calc.js?v=1.6.0"></script>
+<script src="../src/store.js?v=1.6.0"></script>
+<script src="../src/overlay.js?v=1.6.0"></script>
+<script src="../src/engine.js?v=1.6.0"></script>
+<script src="demo.js?v=1.6.0"></script>
 </body>
 </html>

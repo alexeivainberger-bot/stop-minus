@@ -97,6 +97,12 @@
     return null;
   }
 
+  /* Скидка задаётся на каждую строку отдельно (data-discount). */
+  function rowDiscount(item) {
+    if (!item || !item.row || !item.row.dataset) return 0;
+    return C.toNum(item.row.dataset.discount || 0);
+  }
+
   function resolveCost(item) {
     if (!item) return null;
     /* Сначала значение из строки (демо/тестовые данные, где себестоимость
@@ -196,7 +202,8 @@
       costKnown: cost !== null,
       settings: state.settings,
       sku: item.sku,
-      mode: state.mode
+      mode: state.mode,
+      promoPct: rowDiscount(item)
     });
     if (!state.overlay.isUserMoved()) state.overlay.anchorTo(item.input.getBoundingClientRect());
     if (state.overlay.setInfo) {
@@ -227,7 +234,7 @@
     merged.price = price;
     merged.cost = cost;
     var result = C.compute(merged);
-    var promoPct = C.toNum(state.settings.promoDiscountPct);
+    var promoPct = rowDiscount(item);
     if (promoPct > 0) {
       result = C.promoResult(merged, promoPct);
       chip.title = 'Со скидкой ' + Math.round(promoPct) + '%: ' + C.formatRub(result.profit) + ' · ' + C.formatPct(result.marginPct);
@@ -408,8 +415,10 @@
     state.overlay = OV.createOverlay({
       trialLabel: options.trialLabel || '',
       onPromoChange: function (pct) {
+        if (state.active && state.active.row && state.active.row.dataset) {
+          state.active.row.dataset.discount = String(pct);
+        }
         state.settings.promoDiscountPct = pct;
-        S.saveSettings({ promoDiscountPct: pct });
         /* Пересчитываем не только активную строку, но и чипы всех позиций. */
         decorateAll();
         if (state.active) activate(state.active);

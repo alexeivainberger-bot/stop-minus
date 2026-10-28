@@ -7,6 +7,15 @@
   var Engine = window.WbMarginEngine;
   var Calc = window.WbMarginCalc;
 
+  /* Диагностика: любая ошибка страницы должна быть видна в ?selftest=1. */
+  window.addEventListener('error', function (e) {
+    if (!document.body) return;
+    var out = document.createElement('div');
+    out.id = 'selftest';
+    out.textContent = 'SELFTEST FAIL: JS ' + (e && e.message ? e.message : 'error');
+    document.body.appendChild(out);
+  });
+
   var summaryTimer = null;
 
   /* Итог по всем позициям: сколько в плюсе/в минусе и сумма прибыли
@@ -22,8 +31,7 @@
     var data = await S.load();
     var settings = data.settings;
     var rows = document.querySelectorAll('tr[data-sku]');
-    var plus = 0, minus = 0, below = 0, sum = 0, counted = 0;
-    var promoPct = Calc.toNum(settings.promoDiscountPct);
+    var plus = 0, minus = 0, below = 0, sum = 0, counted = 0, withDiscount = 0;
 
     Array.prototype.forEach.call(rows, function (tr) {
       var priceInput = tr.querySelector('.price-input');
@@ -31,13 +39,16 @@
       if (price <= 0) return;
       var costInput = tr.querySelector('.cost-input');
       var cost = costInput ? Calc.toNum(costInput.value) : Calc.toNum(tr.dataset.cost || 0);
+      var discInput = tr.querySelector('.disc-input');
+      var disc = discInput ? Calc.toNum(discInput.value) : Calc.toNum(tr.dataset.discount || 0);
+      if (disc > 0) withDiscount++;
       var merged = Object.assign({}, settings, { price: price, cost: cost });
-      var r = promoPct > 0 ? Calc.promoResult(merged, promoPct) : Calc.compute(merged);
+      var r = disc > 0 ? Calc.promoResult(merged, disc) : Calc.compute(merged);
       counted++;
       sum += r.profit;
-      if (r.profit < 0) minus++;
-      else if (r.marginPct < Calc.toNum(settings.thresholdPct)) below++;
-      else plus++;
+      if (r.profit < 0) { minus++; tr.dataset.state = 'loss'; }
+      else if (r.marginPct < Calc.toNum(settings.thresholdPct)) { below++; tr.dataset.state = 'below'; }
+      else { plus++; tr.dataset.state = 'ok'; }
     });
 
     if (counted < 1) {
@@ -46,7 +57,7 @@
     }
 
     el.hidden = false;
-    var label = promoPct > 0 ? 'Сумма прибыли со скидкой ' + Math.round(promoPct) + '%: ' : 'Сумма прибыли: ';
+    var label = withDiscount > 0 ? 'Сумма прибыли с учётом скидок: ' : 'Сумма прибыли: ';
     var baseBlock =
       '<span class="total-wrap">' + label + '<b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
       Calc.formatRub(sum) + '</b> <span class="hint">по 1 шт каждой позиции</span></span>';
@@ -56,6 +67,7 @@
       '<span class="counts">в норме: <b class="ok">' + plus + '</b></span>' +
       '<span class="counts">ниже порога: <b class="warn">' + below + '</b></span>' +
       '<span class="counts">в минусе: <b class="bad">' + minus + '</b></span>' +
+      '<span class="counts">со скидкой: <b>' + withDiscount + '</b></span>' +
       '<span class="totals">' + baseBlock + '</span>';
   }
 
@@ -118,12 +130,13 @@
       '<td><input class="name-input" data-wbmg-ignore="1" type="text" value="Новый товар ' + index + '"></td>' +
       '<td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="500"></td>' +
       '<td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="1490"></td>' +
-      '<td class="num muted">0% <button type="button" class="row-del" title="Удалить строку">✕</button></td>';
+      '<td class="num"><input class="disc-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="0"> <button type="button" class="row-del" title="Удалить строку">✕</button></td>';
 
     var del = tr.querySelector('.row-del');
     tbody.appendChild(tr);
     bindCostInputs();
     bindTextInputs();
+    bindDiscInputs();
     Engine.scan();
     scheduleSummary();
     var input = tr.querySelector('input');
@@ -154,6 +167,24 @@
     }
   }
 
+  /* Скидка на каждую позицию отдельно. */
+  function bindDiscInputs() {
+    var inputs = document.querySelectorAll('.disc-input');
+    for (var i = 0; i < inputs.length; i++) {
+      (function (input) {
+        if (input.dataset.bound) return;
+        input.dataset.bound = '1';
+        input.addEventListener('input', function () {
+          var tr = input.closest('tr');
+          var value = Math.min(Math.max(Calc.toNum(input.value), 0), 100);
+          if (tr) tr.dataset.discount = String(value);
+          Engine.reload();
+          scheduleSummary();
+        });
+      })(inputs[i]);
+    }
+  }
+
   /* Артикул и название тоже редактируемые: артикул уходит в data-sku строки. */
   function bindTextInputs() {
     var articles = document.querySelectorAll('.art-input');
@@ -172,6 +203,17 @@
     }
   }
 
+  /* «Скидка для всех» раскладывается по строкам. */
+  function applyDiscountToAll(value) {
+    var rows = document.querySelectorAll('tr[data-sku]');
+    Array.prototype.forEach.call(rows, function (tr) {
+      var input = tr.querySelector('.disc-input');
+      var pct = Math.min(Math.max(Calc.toNum(value), 0), 100);
+      if (input) input.value = String(pct);
+      tr.dataset.discount = String(pct);
+    });
+  }
+
   function bindSettingsInputs() {
     Object.keys(SETTINGS_MAP).forEach(function (key) {
       var input = $(SETTINGS_MAP[key]);
@@ -180,10 +222,42 @@
         var patch = {};
         patch[key] = input.value;
         await S.saveSettings(patch);
+        if (key === 'promoDiscountPct') applyDiscountToAll(input.value);
         await Engine.reload();
         scheduleSummary();
       });
     });
+  }
+
+  var sortAsc = true;
+
+  /* Сортировка: убыточные вперёд, повторное нажатие — наоборот. */
+  async function sortRows() {
+    var tbody = document.querySelector('.price-table tbody');
+    if (!tbody) return;
+    var data = await S.load();
+    var settings = data.settings;
+    var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr[data-sku]'));
+    rows.forEach(function (tr) {
+      var priceInput = tr.querySelector('.price-input');
+      var price = priceInput ? Calc.toNum(priceInput.value) : 0;
+      var costInput = tr.querySelector('.cost-input');
+      var cost = costInput ? Calc.toNum(costInput.value) : Calc.toNum(tr.dataset.cost || 0);
+      var discInput = tr.querySelector('.disc-input');
+      var disc = discInput ? Calc.toNum(discInput.value) : Calc.toNum(tr.dataset.discount || 0);
+      var merged = Object.assign({}, settings, { price: price, cost: cost });
+      var r = disc > 0 ? Calc.promoResult(merged, disc) : Calc.compute(merged);
+      tr.dataset.sortProfit = String(r.profit);
+    });
+    rows.sort(function (a, b) {
+      var pa = Calc.toNum(a.dataset.sortProfit);
+      var pb = Calc.toNum(b.dataset.sortProfit);
+      return sortAsc ? pa - pb : pb - pa;
+    });
+    rows.forEach(function (tr) { tbody.appendChild(tr); });
+    sortAsc = !sortAsc;
+    Engine.scan();
+    scheduleSummary();
   }
 
   function bindButtons() {
@@ -210,6 +284,8 @@
 
     if (auto) auto.addEventListener('click', function () { Engine.activateFirst(); });
     if (addRow) addRow.addEventListener('click', function () { addDemoRow(); });
+    var sortBtn = $('btn-sort');
+    if (sortBtn) sortBtn.addEventListener('click', function () { sortRows(); });
     if (manual) manual.addEventListener('click', function () {
       Engine.enableManual({ price: 1990, sku: '123456' });
     });
@@ -270,17 +346,23 @@
   bindButtons();
   bindCostInputs();
   bindTextInputs();
+  bindDiscInputs();
   document.addEventListener('input', function (ev) {
     var t = ev.target;
     if (!t || !t.classList) return;
     if (t.classList.contains('price-input') || t.classList.contains('cost-input')) scheduleSummary();
   });
 
-  /* Ползунок скидки в панели: синхронизируем поле настроек и пересчитываем итог. */
+  /* Ползунок скидки в панели: пишет скидку в строку, синхронизирует её поле. */
   document.addEventListener('wbmg:promo', function (ev) {
     var pct = ev && ev.detail && typeof ev.detail.pct === 'number' ? ev.detail.pct : null;
-    var field = document.getElementById('s-promo');
-    if (field && pct !== null) field.value = String(Math.round(pct));
+    if (pct === null) return;
+    var st = Engine.getState();
+    var row = st && st.active ? st.active.row : null;
+    var field = row ? row.querySelector('.disc-input') : null;
+    if (field) field.value = String(Math.round(pct));
+    var global = document.getElementById('s-promo');
+    if (global) global.value = String(Math.round(pct));
     scheduleSummary();
   });
 
@@ -303,6 +385,8 @@
         costInput.dispatchEvent(new Event('input', { bubbles: true }));
       }
     }
+
+    if (params.has('promo')) applyDiscountToAll(params.get('promo'));
 
     if (params.get('mode') === 'manual') Engine.enableManual({ price: 1990, sku: '123456' });
     else Engine.activateFirst();
@@ -380,21 +464,50 @@
         return el ? el.textContent : '';
       };
       var beforePromo = summaryText();
-      var chipBefore = (document.querySelector('.wbmg-chip') || {}).textContent || '';
+      var chipOf = function (i) {
+        var tr = document.querySelectorAll('tr[data-sku]')[i];
+        var chip = tr ? tr.querySelector('.wbmg-chip') : null;
+        return chip ? chip.textContent : '';
+      };
+      var chipRow1Before = chipOf(0);
+      var chipRow2Before = chipOf(1);
       range.value = '30';
       range.dispatchEvent(new Event('input', { bubbles: true }));
       await wait(300);
       check('поле скидки синхронизировано', document.getElementById('s-promo').value, '30');
-      check('итог помечен скидкой', summaryText().indexOf('со скидкой 30%') > -1, true);
+      check('итог помечен скидкой', summaryText().indexOf('с учётом скидок') > -1, true);
       check('итог изменился из-за скидки', summaryText() !== beforePromo, true);
-      var chipAfter = (document.querySelector('.wbmg-chip') || {}).textContent || '';
-      check('чип пересчитался со скидкой', chipAfter !== chipBefore, true);
+      check('чип активной строки пересчитался', chipOf(1) !== chipRow2Before, true);
+      check('чип другой строки не тронут', chipOf(0) === chipRow1Before, true);
+
+      /* Скидка на конкретную строку через её поле */
+      var discInput = document.querySelectorAll('.disc-input')[0];
+      if (discInput) {
+        discInput.value = '40';
+        discInput.dispatchEvent(new Event('input', { bubbles: true }));
+        await wait(300);
+        check('скидка строки попала в итог', summaryText().indexOf('с учётом скидок') > -1, true);
+        check('чип первой строки пересчитался', chipOf(0) !== chipRow1Before, true);
+
+        discInput.value = '0';
+        discInput.dispatchEvent(new Event('input', { bubbles: true }));
+        await wait(300);
+      }
 
       range.value = '0';
       range.dispatchEvent(new Event('input', { bubbles: true }));
       await wait(300);
       check('поле скидки обнулилось', document.getElementById('s-promo').value, '0');
-      check('итог вернулся к базовому', summaryText().indexOf('со скидкой') === -1, true);
+      check('итог вернулся к базовому', summaryText().indexOf('с учётом скидок') === -1, true);
+
+      /* Сортировка «убыточные вперёд» */
+      var sortBtn = document.getElementById('btn-sort');
+      if (sortBtn) {
+        sortBtn.click();
+        await wait(250);
+        var firstSku = document.querySelector('tr[data-sku]').dataset.sku;
+        check('сортировка: убыточный сверху', firstSku, '345678');
+      }
     }
 
     var out = document.createElement('div');

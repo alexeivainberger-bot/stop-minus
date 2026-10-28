@@ -262,8 +262,8 @@
     if (d > 0) {
       box.dataset.status = promo.status;
       $('r-profit').textContent = C.formatRub(promo.profit);
-      $('r-margin').textContent = C.formatPct(promo.marginPct);
-      $('r-roi').textContent = C.formatPct(promo.roiPct);
+      $('r-margin').textContent = promo.discountedPrice <= 0 ? '—' : C.formatPct(promo.marginPct);
+      $('r-roi').textContent = promo.discountedPrice <= 0 ? '—' : C.formatPct(promo.roiPct);
       $('r-label').textContent = 'Прибыль со скидкой';
       var promoWarn = C.warningText(promo);
       if (promoWarn) {

@@ -84,7 +84,7 @@
     '    <div class="price-line"><span>Цена <b class="price">—</b></span><span class="sku">—</span></div>',
     '    <div class="promo">',
     '      <div class="promo-head"><span>Акция: скидка</span><b class="promo-pct">0%</b></div>',
-    '      <input class="promo-range" type="range" min="0" max="90" step="1" value="0">',
+    '      <input class="promo-range" type="range" min="0" max="100" step="1" value="0">',
     '      <div class="promo-line"></div>',
     '    </div>',
     '    <div class="warn" hidden></div>',
@@ -206,9 +206,10 @@
       var eff = showPromo ? promo : result;
 
       refs.panel.dataset.status = eff.status;
+      var zeroPrice = showPromo && promo.discountedPrice <= 0;
       refs.value.textContent = C.formatRub(eff.profit);
-      refs.margin.textContent = C.formatPct(eff.marginPct);
-      refs.roi.textContent = C.formatPct(eff.roiPct);
+      refs.margin.textContent = zeroPrice ? '—' : C.formatPct(eff.marginPct);
+      refs.roi.textContent = zeroPrice ? '—' : C.formatPct(eff.roiPct);
       refs.price.textContent = showPromo
         ? C.formatRub(result.price) + ' → ' + C.formatRub(promo.discountedPrice)
         : C.formatRub(result.price);

@@ -172,6 +172,20 @@
     var p = pick(raw);
     var d = Math.min(Math.max(toNum(discountPct), 0), 100);
     var discountedPrice = Math.max(toNum(p.price), 0) * (1 - d / 100);
+
+    /* Скидка 100%: товар уходит бесплатно, значит теряются фиксированные
+       затраты. Обычный compute(price = 0) вернул бы «пусто», поэтому считаем явно. */
+    if (discountedPrice <= 0.005) {
+      var zero = compute(Object.assign({}, p, { price: 0 }));
+      zero.profit = round(-fixedCosts(p), 2);
+      zero.marginPct = 0;
+      zero.roiPct = 0;
+      zero.status = 'loss';
+      zero.discountPct = d;
+      zero.discountedPrice = 0;
+      return zero;
+    }
+
     var result = compute(Object.assign({}, p, { price: discountedPrice }));
     result.discountPct = d;
     result.discountedPrice = round(discountedPrice, 2);

@@ -51,17 +51,30 @@
     var tr = document.createElement('tr');
     tr.dataset.sku = article;
     tr.dataset.cost = '500';
+    tr.dataset.demoAdded = '1';
     tr.innerHTML =
       '<td class="mono">' + article + '</td>' +
       '<td>Новый товар ' + index + '</td>' +
       '<td class="num">500 ₽</td>' +
       '<td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="1490"></td>' +
-      '<td class="num muted">0%</td>';
+      '<td class="num muted">0% <button type="button" class="row-del" title="Удалить строку">✕</button></td>';
+
+    var del = tr.querySelector('.row-del');
+    del.addEventListener('click', function () {
+      tr.remove();
+      Engine.scan();
+    });
+
     tbody.appendChild(tr);
     Engine.scan();
     var input = tr.querySelector('input');
     try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
     input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function removeDemoRows() {
+    var rows = document.querySelectorAll('tr[data-demo-added]');
+    for (var i = 0; i < rows.length; i++) rows[i].remove();
   }
 
   function bindSettingsInputs() {
@@ -91,6 +104,7 @@
     });
     if (calibrate) calibrate.addEventListener('click', function () { Engine.startCalibration(); });
     if (reset) reset.addEventListener('click', async function () {
+      removeDemoRows();
       await S.saveSettings({
         commissionPct: 15,
         taxPct: 6,
@@ -147,6 +161,8 @@
   }
 
   window.setTimeout(function () {
+    var extra = Number(params.get('rows') || 0);
+    for (var i = 0; i < extra; i++) addDemoRow();
     if (params.get('mode') === 'manual') Engine.enableManual({ price: 1990, sku: '123456' });
     else Engine.activateFirst();
     if (params.get('panel') === 'corner') {

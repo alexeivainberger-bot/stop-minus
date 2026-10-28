@@ -39,7 +39,7 @@
       else plus++;
     });
 
-    if (counted < 2) {
+    if (counted < 1) {
       el.hidden = true;
       return;
     }
@@ -273,10 +273,12 @@
 
     if (params.get('mode') === 'manual') Engine.enableManual({ price: 1990, sku: '123456' });
     else Engine.activateFirst();
-    if (params.get('panel') === 'corner') {
+    /* В демо панель держим в правом нижнем углу, чтобы не закрывать
+       итоговую строку и заголовок таблицы. */
+    var st = Engine.getState();
+    if (st.overlay) {
       document.body.classList.add('with-rail');
-      var st = Engine.getState();
-      if (st.overlay) st.overlay.pinCorner();
+      st.overlay.pinCorner();
     }
     scheduleSummary();
   }, 200);

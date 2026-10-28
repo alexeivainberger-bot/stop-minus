@@ -328,6 +328,10 @@
       var pct = C.toNum(refs.promoRange.value);
       currentPromo = pct;
       refs.promoPct.textContent = Math.round(pct) + '%';
+      /* Сообщаем странице (демо) о смене скидки, чтобы обновились суммы и поле. */
+      try {
+        document.dispatchEvent(new CustomEvent('wbmg:promo', { detail: { pct: pct } }));
+      } catch (e) { /* старые браузеры — просто пропускаем */ }
       if (options.onPromoChange) {
         options.onPromoChange(pct);
         return;

@@ -23,8 +23,6 @@
     var settings = data.settings;
     var rows = document.querySelectorAll('tr[data-sku]');
     var plus = 0, minus = 0, below = 0, sum = 0, counted = 0;
-    var promoPct = Calc.toNum(settings.promoDiscountPct);
-    var promoSum = 0, promoMinus = 0;
 
     Array.prototype.forEach.call(rows, function (tr) {
       var priceInput = tr.querySelector('.price-input');
@@ -39,12 +37,6 @@
       if (r.profit < 0) minus++;
       else if (r.marginPct < Calc.toNum(settings.thresholdPct)) below++;
       else plus++;
-
-      if (promoPct > 0) {
-        var pr = Calc.promoResult(merged, promoPct);
-        promoSum += pr.profit;
-        if (pr.profit < 0) promoMinus++;
-      }
     });
 
     if (counted < 1) {
@@ -57,20 +49,12 @@
       '<span class="total-wrap">Сумма прибыли: <b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
       Calc.formatRub(sum) + '</b> <span class="hint">по 1 шт каждой позиции</span></span>';
 
-    var promoBlock = '';
-    if (promoPct > 0) {
-      promoBlock =
-        '<span class="total-wrap">Со скидкой ' + Math.round(promoPct) + '%: <b class="total ' +
-        (promoSum < 0 ? 'bad' : 'ok') + '">' + Calc.formatRub(promoSum) + '</b>' +
-        ' <span class="hint">в минусе: ' + promoMinus + ' из ' + counted + '</span></span>';
-    }
-
     el.innerHTML =
       '<span class="counts">позиций: <b>' + counted + '</b></span>' +
       '<span class="counts">в норме: <b class="ok">' + plus + '</b></span>' +
       '<span class="counts">ниже порога: <b class="warn">' + below + '</b></span>' +
       '<span class="counts">в минусе: <b class="bad">' + minus + '</b></span>' +
-      '<span class="totals">' + baseBlock + promoBlock + '</span>';
+      '<span class="totals">' + baseBlock + '</span>';
   }
 
   function plural(n, forms) {
@@ -270,6 +254,14 @@
     if (t.classList.contains('price-input') || t.classList.contains('cost-input')) scheduleSummary();
   });
 
+  /* Ползунок скидки в панели: синхронизируем поле настроек и пересчитываем итог. */
+  document.addEventListener('wbmg:promo', function (ev) {
+    var pct = ev && ev.detail && typeof ev.detail.pct === 'number' ? ev.detail.pct : null;
+    var field = document.getElementById('s-promo');
+    if (field && pct !== null) field.value = String(Math.round(pct));
+    scheduleSummary();
+  });
+
   await Engine.init({});
 
   var firstInput = document.querySelector('.price-input');
@@ -308,8 +300,9 @@
 
   /* Сквозная проверка того, что реально отрисовано: панель, цифры, чип, стоп-сигнал.
      Результат кладём в DOM, чтобы проверять headless-браузером. */
-  function runSelfTest() {
+  async function runSelfTest() {
     var failures = [];
+    var wait = function (ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); };
     function check(name, actual, expected) {
       var a = String(actual === null || actual === undefined ? '' : actual).replace(/\s+/g, ' ').trim();
       var e = String(expected).replace(/\s+/g, ' ').trim();
@@ -351,6 +344,22 @@
           check('клик по строке переключает позицию', q('.price-line .sku'), '#234567');
         }
       }
+
+      /* Ползунок скидки синхронизирует поле настроек, но на итог не влияет */
+      var summaryText = function () {
+        var el = document.getElementById('summary');
+        return el ? el.textContent : '';
+      };
+      range.value = '30';
+      range.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(300);
+      check('поле скидки синхронизировано', document.getElementById('s-promo').value, '30');
+      check('итог без строки про скидку', summaryText().indexOf('Со скидкой') === -1, true);
+
+      range.value = '0';
+      range.dispatchEvent(new Event('input', { bubbles: true }));
+      await wait(300);
+      check('поле скидки обнулилось', document.getElementById('s-promo').value, '0');
     }
 
     var out = document.createElement('div');

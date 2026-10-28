@@ -40,6 +40,36 @@
     thresholdPct: 15
   };
 
+  /* Ориентировочные пресеты по маркетплейсам. Значения — отправная точка:
+     точные тарифы у каждого продавца свои (категория, схема FBO/FBS, склад). */
+  var MARKETPLACES = {
+    wb: {
+      name: 'Wildberries',
+      defaults: {
+        commissionPct: 15, taxPct: 6, logistics: 180, packaging: 30,
+        returnCost: 50, buyoutPct: 90, otherCosts: 20
+      }
+    },
+    ozon: {
+      name: 'Ozon',
+      defaults: {
+        commissionPct: 18, taxPct: 6, logistics: 120, packaging: 30,
+        returnCost: 60, buyoutPct: 85, otherCosts: 50
+      }
+    },
+    yandex: {
+      name: 'Яндекс Маркет',
+      defaults: {
+        commissionPct: 12, taxPct: 6, logistics: 100, packaging: 30,
+        returnCost: 50, buyoutPct: 90, otherCosts: 50
+      }
+    },
+    custom: {
+      name: 'Другой маркетплейс',
+      defaults: {}
+    }
+  };
+
   function toNum(value) {
     if (typeof value === 'number') return isFinite(value) ? value : 0;
     if (value === null || value === undefined) return 0;
@@ -240,6 +270,7 @@
 
   return {
     FORMULA_VERSION: FORMULA_VERSION,
+    MARKETPLACES: MARKETPLACES,
     DEFAULTS: DEFAULTS,
     compute: compute,
     promoResult: promoResult,

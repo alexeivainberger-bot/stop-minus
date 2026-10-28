@@ -91,11 +91,11 @@
 
 <main>
   <section class="hero" style="padding-bottom: 0;">
-    <h1 style="font-size: clamp(28px, 4vw, 42px);">Калькулятор юнит-экономики Wildberries</h1>
+    <h1 style="font-size: clamp(28px, 4vw, 42px);">Калькулятор юнит-экономики маркетплейсов</h1>
     <p class="lead">
-      Введите свою цену и закупку — увидите <b>чистую прибыль, маржу и ROI</b> с учётом комиссии,
-      логистики, упаковки, налога и процента выкупа. Плюс цена «в ноль» и максимальная скидка для акции.
-      Считается в браузере, данные никуда не отправляются.
+      Wildberries, Ozon, Яндекс Маркет или своя схема: введите цену и закупку — увидите
+      <b>чистую прибыль, маржу и ROI</b> с учётом комиссии, логистики, упаковки, налога и процента выкупа.
+      Плюс цена «в ноль» и максимальная скидка для акции. Считается в браузере, данные никуда не отправляются.
     </p>
   </section>
 
@@ -103,6 +103,7 @@
     <div class="card-box">
       <h2>Ваши цифры</h2>
       <div class="fields">
+        <label>Маркетплейс<select id="f-marketplace"></select></label>
         <label>Цена продажи, ₽<input id="f-price" type="text" inputmode="decimal" value="1990"></label>
         <label>Себестоимость, ₽<input id="f-cost" type="text" inputmode="decimal" value="620"></label>
         <label>Упаковка, ₽<input id="f-packaging" type="text" inputmode="decimal" value="30"></label>
@@ -195,7 +196,8 @@
   var DEFAULTS = {
     price: 1990, cost: 620, packaging: 30, logistics: 180,
     commissionPct: 15, taxPct: 6, buyoutPct: 90, returnCost: 50,
-    otherCosts: 20, thresholdPct: 15, promoDiscountPct: 0
+    otherCosts: 20, thresholdPct: 15, promoDiscountPct: 0,
+    marketplace: 'wb'
   };
 
   var state = Object.assign({}, DEFAULTS);
@@ -208,6 +210,8 @@
     });
     var promo = $('f-promo');
     if (promo) state.promoDiscountPct = C.toNum(promo.value);
+    var mp = $('f-marketplace');
+    if (mp && mp.value) state.marketplace = mp.value;
     return state;
   }
 
@@ -218,6 +222,20 @@
     });
     var promo = $('f-promo');
     if (promo) promo.value = String(state.promoDiscountPct || 0);
+    var mp = $('f-marketplace');
+    if (mp) mp.value = state.marketplace || 'wb';
+  }
+
+  function fillMarketplace() {
+    var select = $('f-marketplace');
+    if (!select || !C.MARKETPLACES) return;
+    while (select.firstChild) select.removeChild(select.firstChild);
+    Object.keys(C.MARKETPLACES).forEach(function (key) {
+      var option = document.createElement('option');
+      option.value = key;
+      option.textContent = C.MARKETPLACES[key].name;
+      select.appendChild(option);
+    });
   }
 
   function render() {
@@ -379,6 +397,22 @@
       el.addEventListener('change', render);
     });
     $('f-promo').addEventListener('input', render);
+    var mp = $('f-marketplace');
+    if (mp) {
+      mp.addEventListener('change', function () {
+        var preset = C.MARKETPLACES && C.MARKETPLACES[mp.value];
+        state.marketplace = mp.value;
+        if (preset && preset.defaults) {
+          Object.keys(preset.defaults).forEach(function (key) {
+            if (key !== 'price' && key !== 'cost' && key !== 'thresholdPct') state[key] = preset.defaults[key];
+          });
+        }
+        writeInputs();
+        render();
+        $('note').textContent = 'Тарифы «' + (preset ? preset.name : mp.value) + '» — ориентировочные, сверь с кабинетом';
+        setTimeout(function () { $('note').textContent = ''; }, 3000);
+      });
+    }
     $('copy').addEventListener('click', function () { copy(summary(), 'Расчёт скопирован'); });
     $('share').addEventListener('click', function () { copy(shareUrl(), 'Ссылка с вашими цифрами скопирована'); });
     $('reset').addEventListener('click', function () {
@@ -391,6 +425,7 @@
   }
 
   load();
+  fillMarketplace();
   writeInputs();
   bind();
   render();

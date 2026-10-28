@@ -22,6 +22,33 @@ returnCost: 50,
 otherCosts: 0,
 thresholdPct: 15
 };
+var MARKETPLACES = {
+wb: {
+name: 'Wildberries',
+defaults: {
+commissionPct: 15, taxPct: 6, logistics: 180, packaging: 30,
+returnCost: 50, buyoutPct: 90, otherCosts: 20
+}
+},
+ozon: {
+name: 'Ozon',
+defaults: {
+commissionPct: 18, taxPct: 6, logistics: 120, packaging: 30,
+returnCost: 60, buyoutPct: 85, otherCosts: 50
+}
+},
+yandex: {
+name: 'Яндекс Маркет',
+defaults: {
+commissionPct: 12, taxPct: 6, logistics: 100, packaging: 30,
+returnCost: 50, buyoutPct: 90, otherCosts: 50
+}
+},
+custom: {
+name: 'Другой маркетплейс',
+defaults: {}
+}
+};
 function toNum(value) {
 if (typeof value === 'number') return isFinite(value) ? value : 0;
 if (value === null || value === undefined) return 0;
@@ -185,6 +212,7 @@ return 'ОК';
 }
 return {
 FORMULA_VERSION: FORMULA_VERSION,
+MARKETPLACES: MARKETPLACES,
 DEFAULTS: DEFAULTS,
 compute: compute,
 promoResult: promoResult,
@@ -208,6 +236,7 @@ statusLabel: statusLabel
 'use strict';
 var KEY = 'wbmg.v1';
 var DEFAULT_SETTINGS = {
+marketplace: 'wb',
 taxPreset: 'usn6',
 taxPct: 6,
 thresholdPct: 15,
@@ -1348,6 +1377,27 @@ otherCosts: 's-other',
 promoDiscountPct: 's-promo'
 };
 function $(id) { return document.getElementById(id); }
+function fillMarketplaceSelect() {
+var select = $('s-marketplace');
+if (!select || !Calc || !Calc.MARKETPLACES) return;
+select.innerHTML = '';
+Object.keys(Calc.MARKETPLACES).forEach(function (key) {
+var option = document.createElement('option');
+option.value = key;
+option.textContent = Calc.MARKETPLACES[key].name;
+select.appendChild(option);
+});
+}
+function marketplacePatch(key) {
+var patch = { marketplace: key };
+var preset = Calc.MARKETPLACES && Calc.MARKETPLACES[key];
+if (preset && preset.defaults) {
+Object.keys(preset.defaults).forEach(function (name) {
+patch[name] = preset.defaults[name];
+});
+}
+return patch;
+}
 async function seedSettings() {
 var data = await S.load();
 var patch = {};
@@ -1357,6 +1407,8 @@ var input = $(SETTINGS_MAP[key]);
 if (!input) return;
 input.value = data.settings[key];
 });
+var select = $('s-marketplace');
+if (select) select.value = data.settings.marketplace || 'wb';
 return patch;
 }
 async function seedCosts() {
@@ -1525,6 +1577,20 @@ if (auto) auto.addEventListener('click', function () { Engine.activateFirst(); }
 if (addRow) addRow.addEventListener('click', function () { addDemoRow(); });
 var sortBtn = $('btn-sort');
 if (sortBtn) sortBtn.addEventListener('click', function () { sortRows(); });
+var marketplace = $('s-marketplace');
+if (marketplace) {
+marketplace.addEventListener('change', async function () {
+var patch = marketplacePatch(marketplace.value);
+await S.saveSettings(patch);
+Object.keys(patch).forEach(function (key) {
+if (key === 'marketplace') return;
+var input = $(SETTINGS_MAP[key]);
+if (input) input.value = String(patch[key]);
+});
+await Engine.reload();
+scheduleSummary();
+});
+}
 if (manual) manual.addEventListener('click', function () {
 Engine.enableManual({ price: 1990, sku: '123456' });
 });
@@ -1568,6 +1634,7 @@ returnCost: 0, otherCosts: 0, buyoutPct: 100, thresholdPct: 0, promoDiscountPct:
 }
 await seedSettings();
 await seedCosts();
+fillMarketplaceSelect();
 bindSettingsInputs();
 bindButtons();
 bindCostInputs();
@@ -1639,6 +1706,18 @@ if (a !== e) failures.push(name + ': «' + a + '» вместо «' + e + '»');
 }
 var host = document.getElementById('wbmg-host');
 var shadow = host && host.shadowRoot;
+var mpSelect = document.getElementById('s-marketplace');
+check('выбор маркетплейса есть', mpSelect && mpSelect.options.length >= 4, true);
+if (mpSelect) {
+mpSelect.value = 'ozon';
+mpSelect.dispatchEvent(new Event('change', { bubbles: true }));
+await wait(300);
+check('пресет Ozon подставил комиссию', document.getElementById('s-commission').value, '18');
+mpSelect.value = 'wb';
+mpSelect.dispatchEvent(new Event('change', { bubbles: true }));
+await wait(300);
+check('пресет WB вернул комиссию', document.getElementById('s-commission').value, '15');
+}
 if (!shadow) {
 failures.push('панель не создана');
 } else {
@@ -1649,7 +1728,7 @@ check('ROI', q('.metrics .roi'), '84%');
 check('цена', q('.price-line .price'), '1 990 ₽');
 check('артикул', q('.price-line .sku'), '#123456');
 var chips = document.querySelectorAll('.wbmg-chip');
-check('количество чипов', chips.length, 1);
+check('чип на каждой строке', chips.length, document.querySelectorAll('tr[data-sku]').length);
 check('чип', chips[0] && chips[0].textContent, '717 ₽ · 36%');
 check('кандидатов ровно 3 (настройки не считаются ценой)', Engine.scan().length, 3);
 var range = shadow.querySelector('.promo-range');

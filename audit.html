@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Проверка на скрытых убытках — CSV-аудит цен маркетплейсов</title>
+  <meta name="description" content="Загрузите выгрузку цен из Wildberries, Ozon или Яндекс Маркета — бесплатно получите отчёт: где вы продаёте в минус и сколько теряете. Расчёт в браузере, файл никуда не отправляется.">
+  <link rel="canonical" href="https://alexeivainberger-bot.github.io/stop-minus/audit.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Проверка на скрытых убытках — CSV-аудит маркетплейсов">
+  <meta property="og:description" content="Бесплатно: загрузите выгрузку цен и увидьте, какие артикулы уходят в минус. Файл не покидает браузер.">
+  <meta property="og:image" content="https://alexeivainberger-bot.github.io/stop-minus/docs/store-1.png">
+  <link rel="stylesheet" href="site.css?v=1.9.2">
+  <link rel="icon" href="icons/icon-48.png">
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="index.html">
+    <img src="icons/icon-48.png" alt="" width="28" height="28">
+    Стоп-минус
+  </a>
+  <nav>
+    <a href="index.html">Главная</a>
+    <a href="calculator.html">Калькулятор</a>
+    <a href="demo/demo.html">Демо</a>
+    <a href="privacy.html">Политика</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" style="padding-bottom: 0;">
+    <h1 style="font-size: clamp(28px, 4vw, 42px);">Проверка на скрытых убытках</h1>
+    <p class="lead">
+      Загрузите выгрузку товаров с ценами из Wildberries, Ozon или Яндекс Маркета. Мы посчитаем
+      <b>чистую прибыль по каждому артикулу</b> и покажем, где вы фактически доплачиваете маркетплейсу.
+      Бесплатно, без регистрации.
+    </p>
+    <p class="fine">Файл разбирается прямо в браузере и никуда не отправляется.</p>
+  </section>
+
+  <section class="audit">
+    <div class="audit-card">
+      <h2>1. Загрузите CSV</h2>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept=".csv,.txt,text/csv" hidden>
+        <span class="drop-title">Выбрать файл или перетащить сюда</span>
+        <span class="drop-hint">Нужны колонки: Артикул, Цена, Себестоимость (по желанию: Количество)</span>
+      </label>
+      <p class="note" id="fileNote"></p>
+      <button type="button" class="btn ghost small" id="sample">Скачать пример CSV</button>
+
+      <h2 style="margin-top: 22px;">2. Параметры расчёта</h2>
+      <div class="audit-fields">
+        <label>Маркетплейс<select id="marketplace"></select></label>
+        <label>Комиссия, %<input id="commission" type="text" inputmode="decimal" value="15"></label>
+        <label>Налог, %<input id="tax" type="text" inputmode="decimal" value="6"></label>
+        <label>Логистика, ₽<input id="logistics" type="text" inputmode="decimal" value="180"></label>
+        <label>Упаковка, ₽<input id="packaging" type="text" inputmode="decimal" value="30"></label>
+        <label>Возврат, ₽<input id="returns" type="text" inputmode="decimal" value="50"></label>
+        <label>Прочие, ₽<input id="other" type="text" inputmode="decimal" value="20"></label>
+        <label>Выкуп, %<input id="buyout" type="text" inputmode="decimal" value="90"></label>
+        <label>Порог маржи, %<input id="threshold" type="text" inputmode="decimal" value="15"></label>
+      </div>
+      <p class="note">Тарифы — ориентировочные. Точные проценты по вашей категории и схеме (FBO/FBS) сверьте в кабинете.</p>
+    </div>
+
+    <div class="audit-result" id="result" hidden>
+      <h2>3. Результат</h2>
+      <div class="audit-stats" id="stats"></div>
+      <p class="note" id="warn"></p>
+      <div class="audit-table-wrap">
+        <table class="audit-table" id="table"></table>
+      </div>
+      <div class="cta" style="margin-top: 16px;">
+        <button type="button" class="btn small" id="export">Скачать отчёт CSV</button>
+        <a class="btn ghost small" href="demo/demo.html">Посмотреть демо расширения</a>
+      </div>
+
+      <div class="audit-cta">
+        <b>Хотите видеть это в реальном времени в кабинете?</b>
+        <p>Расширение «Стоп-минус» показывает маржу у каждой цены и предупреждает, когда акция уводит товар в минус. Читает только страницу, ничего не отправляет.</p>
+        <a class="btn small" href="demo/demo.html">Открыть демо</a>
+        <a class="btn ghost small" href="calculator.html">Калькулятор</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="how">
+    <h2>Как считается</h2>
+    <p><code>Прибыль = цена − себестоимость − упаковка − логистика − комиссия − налог − возвраты − прочие</code></p>
+    <p>
+      Комиссия и налог считаются от цены, возвраты — как <code>расход на возврат × (1 − выкуп)</code>.
+      Прибыль умножается на количество, если колонка есть в файле.
+      Мин. цена «в ноль» и максимальная скидка считаются аналитически, а не подбором.
+    </p>
+    <p class="fine">
+      Аудит не заменяет бухгалтерию: хранение, эквайринг и штрафы маркетплейса в формулу не входят —
+      их стоит добавить в «Прочие расходы».
+    </p>
+  </section>
+</main>
+
+<footer class="bottom">
+  <span>Стоп-минус · CSV-аудит</span>
+  <span>Формула <span id="calc-formula-version">—</span> · расчёт локальный</span>
+  <span><a href="privacy.html">Политика конфиденциальности</a></span>
+</footer>
+
+<style>
+  .audit { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 26px; }
+  @media (max-width: 980px) { .audit { grid-template-columns: 1fr; } }
+
+  .audit-card, .audit-result { border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 20px; }
+  .audit-result[hidden] { display: none; }
+  .audit-card h2, .audit-result h2 { margin: 0 0 12px; font-size: 17px; }
+
+  .drop { display: grid; gap: 6px; padding: 26px 18px; border: 2px dashed #d8cfc0; border-radius: 14px; background: #fffdf9; cursor: pointer; text-align: center; }
+  .drop:hover { border-color: var(--accent); }
+  .drop-title { font-weight: 700; }
+  .drop-hint { font-size: 12.5px; color: var(--muted); }
+
+  .audit-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .audit-fields label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+  .audit-fields input, .audit-fields select { font: 14px inherit; padding: 8px 10px; border: 1px solid #d8cfc0; border-radius: 9px; background: #fff; color: var(--ink); width: 100%; }
+  .audit-fields input:focus, .audit-fields select:focus { outline: 2px solid rgba(123, 31, 162, 0.22); border-color: var(--accent); }
+
+  .audit-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .stat { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fffdf9; }
+  .stat span { display: block; font-size: 12px; color: var(--muted); }
+  .stat b { font-size: 20px; letter-spacing: -0.02em; }
+  .stat.bad b { color: var(--bad); }
+  .stat.ok b { color: var(--ok); }
+
+  .audit-table-wrap { margin-top: 14px; overflow-x: auto; }
+  .audit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .audit-table th, .audit-table td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  .audit-table th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .audit-table td.num { text-align: right; }
+  .audit-table tr[data-state="loss"] td { background: #fff6f6; }
+  .audit-table tr[data-state="below"] td { background: #fffdf4; }
+  .audit-table td.bad { color: var(--bad); font-weight: 600; }
+
+  .audit-cta { margin-top: 18px; padding: 14px 16px; border-radius: 12px; background: var(--accent-soft); }
+  .audit-cta p { margin: 6px 0 10px; font-size: 13.5px; color: var(--muted); }
+</style>
+
+<script src="src/calc.js"></script>
+<script src="src/audit-csv.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var C = window.WbMarginCalc;
+  var A = window.WbMarginAudit;
+  var $ = function (id) { return document.getElementById(id); };
+  var PARAMS = ['commission', 'tax', 'logistics', 'packaging', 'returns', 'other', 'buyout', 'threshold'];
+  var lastRows = [];
+  var lastSettings = null;
+
+  function num(id) { return C.toNum($(id).value); }
+
+  function settings() {
+    return {
+      commissionPct: num('commission'),
+      taxPct: num('tax'),
+      logistics: num('logistics'),
+      packaging: num('packaging'),
+      returnCost: num('returns'),
+      otherCosts: num('other'),
+      buyoutPct: num('buyout'),
+      thresholdPct: num('threshold')
+    };
+  }
+
+  function fillMarketplaces() {
+    var select = $('marketplace');
+    Object.keys(C.MARKETPLACES).forEach(function (key) {
+      var option = document.createElement('option');
+      option.value = key;
+      option.textContent = C.MARKETPLACES[key].name;
+      select.appendChild(option);
+    });
+    select.value = 'wb';
+    document.body.dataset.marketplace = 'wb';
+    select.addEventListener('change', function () {
+      var preset = C.MARKETPLACES[select.value];
+      document.body.dataset.marketplace = select.value;
+      if (preset && preset.defaults) {
+        var map = {
+          commissionPct: 'commission', taxPct: 'tax', logistics: 'logistics',
+          packaging: 'packaging', returnCost: 'returns', otherCosts: 'other', buyoutPct: 'buyout'
+        };
+        Object.keys(map).forEach(function (field) {
+          if (preset.defaults[field] !== undefined) $(map[field]).value = preset.defaults[field];
+        });
+      }
+      if (lastRows.length) render();
+    });
+  }
+
+  function audit(rows, s) {
+    var result = [];
+    rows.forEach(function (row) {
+      var merged = Object.assign({}, s, { price: row.price, cost: row.cost });
+      var r = C.compute(merged);
+      result.push({
+        article: row.article,
+        price: row.price,
+        cost: row.cost,
+        qty: row.qty,
+        profit: r.profit,
+        marginPct: r.marginPct,
+        total: r.profit * row.qty,
+        status: r.status
+      });
+    });
+    result.sort(function (a, b) { return a.total - b.total; });
+    return result;
+  }
+
+  function money(n) { return C.formatRub(n); }
+
+  function render() {
+    var s = settings();
+    var computed = audit(lastRows, s);
+    lastSettings = s;
+
+    var bad = computed.filter(function (r) { return r.profit < 0; });
+    var below = computed.filter(function (r) { return r.profit >= 0 && r.marginPct < C.toNum(s.thresholdPct); });
+    var total = computed.reduce(function (sum, r) { return sum + r.total; }, 0);
+    var units = computed.reduce(function (sum, r) { return sum + r.qty; }, 0);
+    var lost = bad.reduce(function (sum, r) { return sum + r.total; }, 0);
+
+    $('stats').innerHTML =
+      '<div class="stat"><span>позиций</span><b>' + computed.length + '</b></div>' +
+      '<div class="stat"><span>штук</span><b>' + units + '</b></div>' +
+      '<div class="stat bad"><span>в минусе</span><b>' + bad.length + '</b></div>' +
+      '<div class="stat"><span>ниже порога</span><b>' + below.length + '</b></div>' +
+      '<div class="stat ' + (total < 0 ? 'bad' : 'ok') + '"><span>общая прибыль-убыток</span><b>' + money(total) + '</b></div>' +
+      '<div class="stat bad"><span>теряете на минусовых</span><b>' + (lost < 0 ? money(lost) : '0 ₽') + '</b></div>';
+
+    var warn = [];
+    if (window.__auditWarnings) warn = warn.concat(window.__auditWarnings);
+    if (bad.length) warn.push('В минусе ' + bad.length + ' из ' + computed.length + ' позиций — это ' + money(lost) + ' убытка.');
+    if (below.length) warn.push('Ещё ' + below.length + ' позиций ниже вашего порога маржи.');
+    if (!bad.length && !below.length) warn.push('Убыточных позиций не нашлось — запас есть.');
+    $('warn').textContent = warn.join(' ');
+
+    var worst = computed.slice(0, 30);
+    var head = '<thead><tr><th>Артикул</th><th>Цена</th><th>Кол-во</th><th>Прибыль/шт</th><th>Маржа</th><th>Вклад в итог</th></tr></thead>';
+    var body = worst.map(function (r) {
+      var state = r.profit < 0 ? 'loss' : (r.marginPct < C.toNum(s.thresholdPct) ? 'below' : 'ok');
+      return '<tr data-state="' + state + '">' +
+        '<td>' + (r.article || '—') + '</td>' +
+        '<td class="num">' + money(r.price) + '</td>' +
+        '<td class="num">' + r.qty + '</td>' +
+        '<td class="num' + (r.profit < 0 ? ' bad' : '') + '">' + money(r.profit) + '</td>' +
+        '<td class="num">' + C.formatPct(r.marginPct) + '</td>' +
+        '<td class="num' + (r.total < 0 ? ' bad' : '') + '">' + money(r.total) + '</td>' +
+        '</tr>';
+    }).join('');
+    $('table').innerHTML = head + '<tbody>' + body + '</tbody>';
+    $('result').hidden = false;
+  }
+
+  function readFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var parsed = A.parse(String(reader.result || ''));
+      if (!parsed.ok) {
+        $('fileNote').textContent = parsed.error;
+        $('result').hidden = true;
+        return;
+      }
+      lastRows = parsed.rows;
+      window.__auditWarnings = [];
+      if (parsed.noCost) {
+        window.__auditWarnings.push('У ' + parsed.noCost + ' позиций не было себестоимости — прибыль посчитана без неё, такие цифры завышены.');
+      }
+      $('fileNote').textContent = 'Загружено позиций: ' + parsed.total +
+        (parsed.skipped ? ', пропущено строк без цены: ' + parsed.skipped : '') + '.';
+      render();
+    };
+    reader.onerror = function () { $('fileNote').textContent = 'Не удалось прочитать файл.'; };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  function bindFile() {
+    var input = $('file');
+    var drop = $('drop');
+    input.addEventListener('change', function () {
+      if (input.files && input.files[0]) readFile(input.files[0]);
+    });
+    ['dragover', 'dragleave', 'drop'].forEach(function (type) {
+      drop.addEventListener(type, function (ev) {
+        ev.preventDefault();
+        drop.style.borderColor = type === 'dragover' ? 'var(--accent)' : '#d8cfc0';
+        if (type === 'drop' && ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0]) {
+          readFile(ev.dataTransfer.files[0]);
+        }
+      });
+    });
+  }
+
+  function sample() {
+    var text = 'Артикул;Цена;Себестоимость;Количество\n123456;1990;620;100\n234567;2990;1100;50\n345678;390;150;30\n';
+    var blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'primer-cen.csv';
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 1500);
+  }
+
+  function exportReport() {
+    if (!lastRows.length) return;
+    var computed = audit(lastRows, lastSettings || settings());
+    var lines = ['артикул;цена;себестоимость;количество;прибыль_за_шт;маржа_процент;вклад_в_итог'];
+    computed.forEach(function (r) {
+      lines.push([r.article, r.price, r.cost, r.qty, r.profit.toFixed(2), r.marginPct.toFixed(1), r.total.toFixed(2)].join(';'));
+    });
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'audit-stop-minus.csv';
+    link.click();
+    setTimeout(function () { URL.revokeObjectURL(link.href); }, 1500);
+  }
+
+  fillMarketplaces();
+  bindFile();
+  $('sample').addEventListener('click', sample);
+  $('export').addEventListener('click', exportReport);
+  PARAMS.forEach(function (id) {
+    $(id).addEventListener('input', function () { if (lastRows.length) render(); });
+  });
+
+  var fv = $('calc-formula-version');
+  if (fv && C.FORMULA_VERSION) fv.textContent = C.FORMULA_VERSION;
+
+  /* ?demo=1 — прогнать пример без файла (для проверок и скриншотов). */
+  var params = new URLSearchParams(location.search);
+  if (params.has('demo')) {
+    var sampleText = 'Артикул;Цена;Себестоимость;Количество\n123456;1990;620;100\n234567;2990;1100;50\n345678;390;150;30\n';
+    var parsed = A.parse(sampleText);
+    lastRows = parsed.rows;
+    $('fileNote').textContent = 'Демо-пример: 3 позиции.';
+    render();
+  }
+})();
+</script>
+</body>
+</html>

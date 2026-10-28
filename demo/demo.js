@@ -57,10 +57,9 @@
     }
 
     el.hidden = false;
-    var label = withDiscount > 0 ? 'Сумма прибыли с учётом скидок: ' : 'Сумма прибыли: ';
     var baseBlock =
-      '<span class="total-wrap">' + label + '<b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
-      Calc.formatRub(sum) + '</b> <span class="hint">по 1 шт каждой позиции</span></span>';
+      '<span class="total-wrap">Общая сумма прибыль-убыток: <b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
+      Calc.formatRub(sum) + '</b></span>';
 
     el.innerHTML =
       '<span class="counts">позиций: <b>' + counted + '</b></span>' +
@@ -475,7 +474,6 @@
       range.dispatchEvent(new Event('input', { bubbles: true }));
       await wait(300);
       check('поле скидки синхронизировано', document.getElementById('s-promo').value, '30');
-      check('итог помечен скидкой', summaryText().indexOf('с учётом скидок') > -1, true);
       check('итог изменился из-за скидки', summaryText() !== beforePromo, true);
       check('чип активной строки пересчитался', chipOf(1) !== chipRow2Before, true);
       check('чип другой строки не тронут', chipOf(0) === chipRow1Before, true);
@@ -483,10 +481,11 @@
       /* Скидка на конкретную строку через её поле */
       var discInput = document.querySelectorAll('.disc-input')[0];
       if (discInput) {
+        var summaryBeforeRow = summaryText();
         discInput.value = '40';
         discInput.dispatchEvent(new Event('input', { bubbles: true }));
         await wait(300);
-        check('скидка строки попала в итог', summaryText().indexOf('с учётом скидок') > -1, true);
+        check('скидка строки попала в итог', summaryText() !== summaryBeforeRow, true);
         check('чип первой строки пересчитался', chipOf(0) !== chipRow1Before, true);
 
         discInput.value = '0';
@@ -498,7 +497,7 @@
       range.dispatchEvent(new Event('input', { bubbles: true }));
       await wait(300);
       check('поле скидки обнулилось', document.getElementById('s-promo').value, '0');
-      check('итог вернулся к базовому', summaryText().indexOf('с учётом скидок') === -1, true);
+      check('итог вернулся к базовому', summaryText(), beforePromo);
 
       /* Сортировка «убыточные вперёд» */
       var sortBtn = document.getElementById('btn-sort');

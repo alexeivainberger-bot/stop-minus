@@ -1324,7 +1324,7 @@ if (!el) return;
 var data = await S.load();
 var settings = data.settings;
 var rows = document.querySelectorAll('tr[data-sku]');
-var plus = 0, minus = 0, below = 0, sum = 0, counted = 0, withDiscount = 0;
+var plus = 0, minus = 0, below = 0, sum = 0, counted = 0, withDiscount = 0, units = 0;
 Array.prototype.forEach.call(rows, function (tr) {
 var priceInput = tr.querySelector('.price-input');
 var price = priceInput ? Calc.toNum(priceInput.value) : 0;
@@ -1333,11 +1333,14 @@ var costInput = tr.querySelector('.cost-input');
 var cost = costInput ? Calc.toNum(costInput.value) : Calc.toNum(tr.dataset.cost || 0);
 var discInput = tr.querySelector('.disc-input');
 var disc = discInput ? Calc.toNum(discInput.value) : Calc.toNum(tr.dataset.discount || 0);
+var qtyInput = tr.querySelector('.qty-input');
+var qty = Math.max(1, Math.round(qtyInput ? Calc.toNum(qtyInput.value) : Calc.toNum(tr.dataset.qty || 1)));
 if (disc > 0) withDiscount++;
 var merged = Object.assign({}, settings, { price: price, cost: cost });
 var r = disc > 0 ? Calc.promoResult(merged, disc) : Calc.compute(merged);
 counted++;
-sum += r.profit;
+units += qty;
+sum += r.profit * qty;
 if (r.profit < 0) { minus++; tr.dataset.state = 'loss'; }
 else if (r.marginPct < Calc.toNum(settings.thresholdPct)) { below++; tr.dataset.state = 'below'; }
 else { plus++; tr.dataset.state = 'ok'; }
@@ -1352,6 +1355,7 @@ var baseBlock =
 Calc.formatRub(sum) + '</b></span>';
 el.innerHTML =
 '<span class="counts">позиций: <b>' + counted + '</b></span>' +
+'<span class="counts">штук: <b>' + units + '</b></span>' +
 '<span class="counts">в норме: <b class="ok">' + plus + '</b></span>' +
 '<span class="counts">ниже порога: <b class="warn">' + below + '</b></span>' +
 '<span class="counts">в минусе: <b class="bad">' + minus + '</b></span>' +
@@ -1436,12 +1440,14 @@ tr.innerHTML =
 '<td><input class="name-input" data-wbmg-ignore="1" type="text" value="Новый товар ' + index + '"></td>' +
 '<td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="500"></td>' +
 '<td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="1490"></td>' +
+'<td class="num"><input class="qty-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="1"></td>' +
 '<td class="num"><input class="disc-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="0"> <button type="button" class="row-del" title="Удалить строку">✕</button></td>';
 var del = tr.querySelector('.row-del');
 tbody.appendChild(tr);
 bindCostInputs();
 bindTextInputs();
 bindDiscInputs();
+bindQtyInputs();
 Engine.scan();
 scheduleSummary();
 var input = tr.querySelector('input');
@@ -1464,6 +1470,21 @@ var value = Number(String(input.value).replace(/[^\d.,]/g, '').replace(',', '.')
 var cost = isFinite(value) ? value : 0;
 if (tr) tr.dataset.cost = String(cost);
 Engine.reload();
+});
+})(inputs[i]);
+}
+}
+function bindQtyInputs() {
+var inputs = document.querySelectorAll('.qty-input');
+for (var i = 0; i < inputs.length; i++) {
+(function (input) {
+if (input.dataset.bound) return;
+input.dataset.bound = '1';
+input.addEventListener('input', function () {
+var tr = input.closest('tr');
+var value = Math.max(1, Math.round(Calc.toNum(input.value)));
+if (tr) tr.dataset.qty = String(value);
+scheduleSummary();
 });
 })(inputs[i]);
 }
@@ -1642,12 +1663,13 @@ bindButtons();
 bindCostInputs();
 bindTextInputs();
 bindDiscInputs();
+bindQtyInputs();
 var formulaEl = document.getElementById('formula-version');
 if (formulaEl && Calc && Calc.FORMULA_VERSION) formulaEl.textContent = Calc.FORMULA_VERSION;
 document.addEventListener('input', function (ev) {
 var t = ev.target;
 if (!t || !t.classList) return;
-if (t.classList.contains('price-input') || t.classList.contains('cost-input') || t.classList.contains('disc-input')) {
+if (t.classList.contains('price-input') || t.classList.contains('cost-input') || t.classList.contains('disc-input') || t.classList.contains('qty-input')) {
 scheduleSummary();
 }
 });
@@ -1676,6 +1698,13 @@ var costInput = document.querySelector('.cost-input');
 if (costInput) {
 costInput.value = params.get('cost');
 costInput.dispatchEvent(new Event('input', { bubbles: true }));
+}
+}
+if (params.has('qty')) {
+var qtyField = document.querySelector('.qty-input');
+if (qtyField) {
+qtyField.value = params.get('qty');
+qtyField.dispatchEvent(new Event('input', { bubbles: true }));
 }
 }
 if (params.has('promo')) applyDiscountToAll(params.get('promo'));
@@ -1803,6 +1832,19 @@ sortBtn.click();
 await wait(250);
 var firstSku = document.querySelector('tr[data-sku]').dataset.sku;
 check('сортировка: убыточный сверху', firstSku, '345678');
+}
+check('штук по умолчанию', summaryText().indexOf('штук: 3') > -1, true);
+var qtyInput = document.querySelector('.qty-input');
+if (qtyInput) {
+var beforeQty = summaryText();
+qtyInput.value = '2';
+qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+await wait(300);
+check('итог учёл количество', summaryText() !== beforeQty, true);
+check('штук стало 4', summaryText().indexOf('штук: 4') > -1, true);
+qtyInput.value = '1';
+qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+await wait(300);
 }
 }
 var out = document.createElement('div');

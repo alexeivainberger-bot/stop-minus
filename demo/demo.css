@@ -231,6 +231,7 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
 .price-input { max-width: 130px; font-weight: 700; }
 
 .cost-input { max-width: 110px; }
+.qty-input { max-width: 64px; }
 .disc-input { max-width: 64px; }
 .price-table td, .price-table th { white-space: nowrap; }
 .price-input { max-width: 110px; }

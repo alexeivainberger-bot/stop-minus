@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Стоп-минус — демо</title>
-  <link rel="stylesheet" href="demo.css?v=1.8.2">
+  <link rel="stylesheet" href="demo.css?v=1.9.0">
 </head>
 <body>
 
@@ -53,6 +53,7 @@
         <th>Наименование</th>
         <th>Себестоимость</th>
         <th>Цена, ₽</th>
+        <th>Кол-во, шт</th>
         <th>Скидка, %</th>
       </tr>
     </thead>
@@ -62,6 +63,7 @@
         <td><input class="name-input" data-wbmg-ignore="1" type="text" value="Футболка oversize, чёрная"></td>
         <td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="620"></td>
         <td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="1990"></td>
+        <td class="num"><input class="qty-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="1"></td>
         <td class="num"><input class="disc-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="0"> <button type="button" class="row-del" title="Удалить строку">✕</button></td>
       </tr>
       <tr data-sku="234567" data-cost="1100">
@@ -69,6 +71,7 @@
         <td><input class="name-input" data-wbmg-ignore="1" type="text" value="Худи с начёсом, серое"></td>
         <td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="1100"></td>
         <td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="2990"></td>
+        <td class="num"><input class="qty-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="1"></td>
         <td class="num"><input class="disc-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="0"> <button type="button" class="row-del" title="Удалить строку">✕</button></td>
       </tr>
       <tr data-sku="345678" data-cost="150">
@@ -76,12 +79,13 @@
         <td><input class="name-input" data-wbmg-ignore="1" type="text" value="Носки, комплект 5 пар"></td>
         <td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="150"></td>
         <td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="390"></td>
+        <td class="num"><input class="qty-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="1"></td>
         <td class="num"><input class="disc-input" data-wbmg-ignore="1" type="text" inputmode="numeric" value="0"> <button type="button" class="row-del" title="Удалить строку">✕</button></td>
       </tr>
     </tbody>
   </table>
 </main>
 
-<script src="demo.bundle.js?v=1.8.2"></script>
+<script src="demo.bundle.js?v=1.9.0"></script>
 </body>
 </html>

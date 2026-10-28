@@ -1468,6 +1468,11 @@ if (key === 'promoDiscountPct') applyDiscountToAll(input.value);
 await Engine.reload();
 scheduleSummary();
 });
+if (key === 'promoDiscountPct') {
+input.addEventListener('change', function () {
+input.value = '';
+});
+}
 });
 }
 var sortAsc = true;
@@ -1634,8 +1639,6 @@ if (a !== e) failures.push(name + ': «' + a + '» вместо «' + e + '»');
 }
 var host = document.getElementById('wbmg-host');
 var shadow = host && host.shadowRoot;
-var formulaText = (document.getElementById('formula-version') || {}).textContent || '';
-check('версия формулы видна в подвале', formulaText, Calc.FORMULA_VERSION);
 if (!shadow) {
 failures.push('панель не создана');
 } else {

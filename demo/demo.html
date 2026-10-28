@@ -26,7 +26,7 @@
     <label>Возврат, ₽<input id="s-return" type="number" step="1" min="0"></label>
     <label>Выкуп, %<input id="s-buyout" type="number" step="1" min="0" max="100"></label>
     <label>Прочие, ₽<input id="s-other" type="number" step="1" min="0"></label>
-    <label>Скидка для всех, %<input id="s-promo" type="number" step="1" min="0" max="100"></label>
+    <label>Скидка для всех, % (разово)<input id="s-promo" type="number" step="1" min="0" max="100" placeholder="0"></label>
   </div>
 </section>
 
@@ -81,10 +81,6 @@
   </table>
 </main>
 
-<footer class="foot">
-  Расчёт локальный: данные не покидают браузер. Формула <span id="formula-version">—</span>.
-</footer>
-
-<script src="demo.bundle.js?v=1.7.3"></script>
+<script src="demo.bundle.js?v=1.7.5"></script>
 </body>
 </html>

@@ -23,6 +23,10 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
+  /* Версия формулы. Меняется, когда меняется порядок расчёта, чтобы
+     старые и новые цифры можно было различить. */
+  var FORMULA_VERSION = '2026-10-28.1';
+
   var DEFAULTS = {
     price: 0,
     cost: 0,
@@ -235,6 +239,7 @@
   }
 
   return {
+    FORMULA_VERSION: FORMULA_VERSION,
     DEFAULTS: DEFAULTS,
     compute: compute,
     promoResult: promoResult,

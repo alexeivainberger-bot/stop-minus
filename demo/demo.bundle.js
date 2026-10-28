@@ -9,6 +9,7 @@ root.WbMarginCalc = factory();
 }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
 'use strict';
+var FORMULA_VERSION = '2026-10-28.1';
 var DEFAULTS = {
 price: 0,
 cost: 0,
@@ -183,6 +184,7 @@ if (status === 'empty') return '—';
 return 'ОК';
 }
 return {
+FORMULA_VERSION: FORMULA_VERSION,
 DEFAULTS: DEFAULTS,
 compute: compute,
 promoResult: promoResult,
@@ -218,7 +220,8 @@ buyoutPct: 90,
 otherCosts: 20,
 calibratedSelector: '',
 promoDiscountPct: 0,
-telemetryConsent: false
+telemetryConsent: false,
+formulaVersion: '2026-10-28.1'
 };
 var cache = null;
 function hasChromeStorage() {
@@ -1495,6 +1498,51 @@ sortAsc = !sortAsc;
 Engine.scan();
 scheduleSummary();
 }
+async function scenario(deltas) {
+var out = document.getElementById('sim-result');
+if (!out) return;
+var data = await S.load();
+var base = data.settings;
+var changed = Object.assign({}, base);
+if (deltas.commission) changed.commissionPct = Calc.toNum(base.commissionPct) + Calc.toNum(deltas.commission);
+if (deltas.logistics) changed.logistics = Calc.toNum(base.logistics) + Calc.toNum(deltas.logistics);
+if (deltas.packaging) changed.packaging = Calc.toNum(base.packaging) + Calc.toNum(deltas.packaging);
+if (deltas.other) changed.otherCosts = Calc.toNum(base.otherCosts) + Calc.toNum(deltas.other);
+var rows = document.querySelectorAll('tr[data-sku]');
+var before = { loss: 0, sum: 0, total: 0 };
+var after = { loss: 0, sum: 0 };
+Array.prototype.forEach.call(rows, function (tr) {
+var priceInput = tr.querySelector('.price-input');
+var price = priceInput ? Calc.toNum(priceInput.value) : 0;
+if (price <= 0) return;
+var costInput = tr.querySelector('.cost-input');
+var cost = costInput ? Calc.toNum(costInput.value) : Calc.toNum(tr.dataset.cost || 0);
+var discInput = tr.querySelector('.disc-input');
+var disc = discInput ? Calc.toNum(discInput.value) : Calc.toNum(tr.dataset.discount || 0);
+var mergedBase = Object.assign({}, base, { price: price, cost: cost });
+var mergedNew = Object.assign({}, changed, { price: price, cost: cost });
+var rb = disc > 0 ? Calc.promoResult(mergedBase, disc) : Calc.compute(mergedBase);
+var rn = disc > 0 ? Calc.promoResult(mergedNew, disc) : Calc.compute(mergedNew);
+before.total++;
+before.sum += rb.profit;
+after.sum += rn.profit;
+if (rb.profit < 0) before.loss++;
+if (rn.profit < 0) after.loss++;
+});
+if (!before.total) {
+out.textContent = 'Добавь хотя бы одну позицию с ценой.';
+return;
+}
+var label = deltas.commission ? 'Комиссия +' + deltas.commission + '%'
+: deltas.logistics ? 'Логистика +' + deltas.logistics + ' ₽'
+: deltas.packaging ? 'Упаковка +' + deltas.packaging + ' ₽'
+: 'Прочие +' + deltas.other + ' ₽';
+var delta = after.sum - before.sum;
+out.innerHTML = '<b>' + label + '</b> → убыточных станет: <b class="bad">' + after.loss + ' из ' + before.total +
+'</b> (сейчас ' + before.loss + ') · общая сумма: <b class="' + (after.sum < 0 ? 'bad' : 'ok') + '">' +
+Calc.formatRub(after.sum) + '</b> вместо ' + Calc.formatRub(before.sum) +
+' · разница <b class="' + (delta < 0 ? 'bad' : 'ok') + '">' + (delta > 0 ? '+' : '') + Calc.formatRub(delta) + '</b>';
+}
 function bindButtons() {
 var auto = $('btn-auto');
 var manual = $('btn-manual');
@@ -1517,6 +1565,24 @@ if (auto) auto.addEventListener('click', function () { Engine.activateFirst(); }
 if (addRow) addRow.addEventListener('click', function () { addDemoRow(); });
 var sortBtn = $('btn-sort');
 if (sortBtn) sortBtn.addEventListener('click', function () { sortRows(); });
+var sim = $('sim');
+if (sim) {
+sim.addEventListener('click', function (ev) {
+var btn = ev.target.closest('.sim-btn');
+if (!btn) return;
+if (btn.dataset.reset) {
+var res = $('sim-result');
+if (res) res.textContent = 'Нажми кнопку — покажу, сколько позиций станет убыточными и как изменится общая сумма.';
+return;
+}
+scenario({
+commission: btn.dataset.commission,
+logistics: btn.dataset.logistics,
+packaging: btn.dataset.packaging,
+other: btn.dataset.other
+});
+});
+}
 if (manual) manual.addEventListener('click', function () {
 Engine.enableManual({ price: 1990, sku: '123456' });
 });
@@ -1697,6 +1763,14 @@ sortBtn.click();
 await wait(250);
 var firstSku = document.querySelector('tr[data-sku]').dataset.sku;
 check('сортировка: убыточный сверху', firstSku, '345678');
+}
+var simBtn = document.querySelector('.sim-btn[data-commission]');
+if (simBtn) {
+simBtn.click();
+await wait(300);
+var simText = (document.getElementById('sim-result') || {}).textContent || '';
+check('симулятор посчитал сценарий', simText.indexOf('убыточных станет') > -1, true);
+check('симулятор показал разницу', simText.indexOf('разница') > -1, true);
 }
 }
 var out = document.createElement('div');

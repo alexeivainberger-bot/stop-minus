@@ -33,6 +33,21 @@
 <main>
   <div class="summary" id="summary" hidden></div>
 
+  <section class="sim" id="sim">
+    <div class="sim-head">
+      <span class="sim-title">Симулятор тарифов — что будет, если WB поднимет расходы</span>
+      <span class="sim-tag">ничего не меняет в настройках</span>
+    </div>
+    <div class="sim-actions">
+      <button type="button" class="sim-btn secondary" data-commission="2">Комиссия +2%</button>
+      <button type="button" class="sim-btn secondary" data-logistics="50">Логистика +50 ₽</button>
+      <button type="button" class="sim-btn secondary" data-packaging="20">Упаковка +20 ₽</button>
+      <button type="button" class="sim-btn secondary" data-other="50">Прочие +50 ₽</button>
+      <button type="button" class="sim-btn ghost" data-reset="1">Сбросить</button>
+    </div>
+    <div class="sim-result" id="sim-result">Нажми кнопку — покажу, сколько позиций станет убыточными и как изменится общая сумма.</div>
+  </section>
+
   <div class="page-head">
     <h1>Цены и скидки</h1>
     <div class="actions">
@@ -80,6 +95,6 @@
     </tbody>
   </table>
 </main>
-  <script src="demo.bundle.js?v=1.6.4"></script>
+  <script src="demo.bundle.js?v=1.7.0"></script>
 </body>
 </html>

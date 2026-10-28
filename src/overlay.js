@@ -266,7 +266,11 @@
           var maxText = 'Без скидки. Максимальная скидка без минуса: ';
           maxText += (maxZero === null ? '—' : Math.floor(maxZero) + '%');
           if (maxTarget !== null && threshold > 0) {
-            maxText += ' · до маржи ' + Math.round(threshold) + '%: ' + Math.floor(maxTarget) + '%';
+            if (maxTarget <= 0) {
+              maxText += ' · маржа ' + Math.round(threshold) + '% не достигается даже без скидки';
+            } else {
+              maxText += ' · до маржи ' + Math.round(threshold) + '%: ' + Math.floor(maxTarget) + '%';
+            }
           }
           refs.promoLine.textContent = maxText;
         }

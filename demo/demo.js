@@ -47,7 +47,7 @@
     el.hidden = false;
     el.innerHTML =
       '<b>Итого по ' + counted + ' ' + plural(counted, ['позиции', 'позициям', 'позициям']) + '</b>' +
-      '<span>в плюсе: <b class="ok">' + plus + '</b></span>' +
+      '<span>в норме: <b class="ok">' + plus + '</b></span>' +
       '<span>ниже порога: <b class="warn">' + below + '</b></span>' +
       '<span>в минусе: <b class="bad">' + minus + '</b></span>' +
       '<span>сумма прибыли: <b class="' + (sum < 0 ? 'bad' : 'ok') + '">' + Calc.formatRub(sum) + '</b>' +

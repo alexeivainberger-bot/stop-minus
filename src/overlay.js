@@ -84,7 +84,7 @@
     '    <div class="price-line"><span>Цена <b class="price">—</b></span><span class="sku">—</span></div>',
     '    <div class="promo">',
     '      <div class="promo-head"><span>Акция: скидка</span><b class="promo-pct">0%</b></div>',
-    '      <input class="promo-range" type="range" min="0" max="70" step="1" value="0">',
+    '      <input class="promo-range" type="range" min="0" max="90" step="1" value="0">',
     '      <div class="promo-line"></div>',
     '    </div>',
     '    <div class="warn" hidden></div>',
@@ -215,7 +215,9 @@
       refs.sku.textContent = sku ? '#' + sku : '—';
       if (refs.profitLabel) refs.profitLabel.textContent = showPromo ? 'Прибыль со скидкой' : 'Чистая прибыль';
 
-      var warn = C.warningText(eff);
+      /* При включённой скидке отдельная плашка «продажа в минус» не нужна:
+         стоп-сигнал уже есть в строке акции. */
+      var warn = showPromo ? null : C.warningText(eff);
       if (warn) {
         refs.warn.hidden = false;
         refs.warn.textContent = warn;

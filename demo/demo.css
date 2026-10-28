@@ -147,7 +147,7 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
 
 .summary[hidden] { display: none; }
 .summary b { color: var(--ink); }
-.summary .total-wrap { display: inline-flex; align-items: baseline; gap: 8px; }
+.summary .total-wrap.promo .total { font-size: 20px; }
 .summary .total { font-size: 22px; letter-spacing: -0.02em; }
 .summary .counts { white-space: nowrap; }
 .summary .ok { color: #1e7a4b; }

@@ -23,6 +23,8 @@
     var settings = data.settings;
     var rows = document.querySelectorAll('tr[data-sku]');
     var plus = 0, minus = 0, below = 0, sum = 0, counted = 0;
+    var promoPct = Calc.toNum(settings.promoDiscountPct);
+    var promoSum = 0, promoMinus = 0;
 
     Array.prototype.forEach.call(rows, function (tr) {
       var priceInput = tr.querySelector('.price-input');
@@ -37,6 +39,12 @@
       if (r.profit < 0) minus++;
       else if (r.marginPct < Calc.toNum(settings.thresholdPct)) below++;
       else plus++;
+
+      if (promoPct > 0) {
+        var pr = Calc.promoResult(merged, promoPct);
+        promoSum += pr.profit;
+        if (pr.profit < 0) promoMinus++;
+      }
     });
 
     if (counted < 1) {
@@ -45,9 +53,18 @@
     }
 
     el.hidden = false;
+    var promoBlock = '';
+    if (promoPct > 0) {
+      promoBlock =
+        '<span class="total-wrap promo">Со скидкой ' + Math.round(promoPct) + '%: <b class="total ' +
+        (promoSum < 0 ? 'bad' : 'ok') + '">' + Calc.formatRub(promoSum) + '</b>' +
+        ' <span class="hint">в минусе: ' + promoMinus + ' из ' + counted + '</span></span>';
+    }
+
     el.innerHTML =
       '<span class="total-wrap">Сумма прибыли: <b class="total ' + (sum < 0 ? 'bad' : 'ok') + '">' +
       Calc.formatRub(sum) + '</b> <span class="hint">если продать по одной штуке каждой позиции</span></span>' +
+      promoBlock +
       '<span class="counts">позиций: <b>' + counted + '</b></span>' +
       '<span class="counts">в норме: <b class="ok">' + plus + '</b></span>' +
       '<span class="counts">ниже порога: <b class="warn">' + below + '</b></span>' +

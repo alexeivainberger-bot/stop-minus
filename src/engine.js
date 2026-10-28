@@ -116,6 +116,7 @@
   function scoreInput(input) {
     var type = (input.getAttribute('type') || 'text').toLowerCase();
     if (['checkbox', 'radio', 'file', 'submit', 'button', 'hidden', 'password', 'search', 'email'].indexOf(type) >= 0) return -1;
+    if (input.getAttribute('data-wbmg-ignore')) return -1; /* поле себестоимости в демо — не цена */
 
     /* Дешёвый отсев: поле без намёка на цену и без числа — точно не наше.
        Дорогие проверки (layout, computed style) остаются только для кандидатов. */

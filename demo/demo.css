@@ -161,6 +161,8 @@ button.ghost { background: transparent; color: var(--muted); border: 1px solid v
 
 .price-input { max-width: 130px; font-weight: 700; }
 
+.cost-input { max-width: 120px; }
+
 .row-del {
   margin-left: 8px;
   border: 0;

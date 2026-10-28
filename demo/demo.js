@@ -55,7 +55,7 @@
     tr.innerHTML =
       '<td class="mono">' + article + '</td>' +
       '<td>Новый товар ' + index + '</td>' +
-      '<td class="num">500 ₽</td>' +
+      '<td class="num"><input class="cost-input" data-wbmg-ignore="1" type="text" inputmode="decimal" value="500"></td>' +
       '<td><input class="price-input" type="text" inputmode="decimal" placeholder="Цена, ₽" value="1490"></td>' +
       '<td class="num muted">0% <button type="button" class="row-del" title="Удалить строку">✕</button></td>';
 
@@ -66,6 +66,7 @@
     });
 
     tbody.appendChild(tr);
+    bindCostInputs();
     Engine.scan();
     var input = tr.querySelector('input');
     try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
@@ -75,6 +76,23 @@
   function removeDemoRows() {
     var rows = document.querySelectorAll('tr[data-demo-added]');
     for (var i = 0; i < rows.length; i++) rows[i].remove();
+  }
+
+  /* Себестоимость в демо можно править прямо в таблице. */
+  function bindCostInputs() {
+    var inputs = document.querySelectorAll('.cost-input');
+    for (var i = 0; i < inputs.length; i++) {
+      (function (input) {
+        if (input.dataset.bound) return;
+        input.dataset.bound = '1';
+        input.addEventListener('input', function () {
+          var tr = input.closest('tr');
+          var cost = C.toNum ? C.toNum(input.value) : Number(input.value);
+          if (tr) tr.dataset.cost = String(isFinite(cost) ? cost : 0);
+          Engine.reload();
+        });
+      })(inputs[i]);
+    }
   }
 
   function bindSettingsInputs() {
@@ -105,6 +123,16 @@
     if (calibrate) calibrate.addEventListener('click', function () { Engine.startCalibration(); });
     if (reset) reset.addEventListener('click', async function () {
       removeDemoRows();
+      var baseCosts = { '123456': '620', '234567': '1100', '345678': '150' };
+      Array.prototype.forEach.call(document.querySelectorAll('.cost-input'), function (input) {
+        var tr = input.closest('tr');
+        if (!tr || tr.dataset.demoAdded) return;
+        var value = baseCosts[tr.dataset.sku];
+        if (value !== undefined) {
+          input.value = value;
+          tr.dataset.cost = value;
+        }
+      });
       await S.saveSettings({
         commissionPct: 15,
         taxPct: 6,
@@ -151,6 +179,7 @@
   await seedCosts();
   bindSettingsInputs();
   bindButtons();
+  bindCostInputs();
 
   await Engine.init({});
 
